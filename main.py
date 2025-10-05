@@ -9,7 +9,6 @@ from authlib.integrations.flask_client import OAuth
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'a-very-secret-key-for-development-only')
 
-# --- Google OAuth Configuration ---
 app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID', '367711020009-o70b96v4cv604acg2hqv60k8c5mjmhtr.apps.googleusercontent.com')
 app.config['GOOGLE_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET', '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')
 app.config['GOOGLE_DISCOVERY_URL'] = (
@@ -26,20 +25,18 @@ oauth.register(
     client_kwargs={'scope': 'openid email profile'},
 )
 
-# --- Firebase Initialization ---
-cred_path = os.path.join(os.path.dirname(__file__), 'firebase.json')
-cred = credentials.Certificate(cred_path)
+firebase_credentials_str = os.environ.get('FIREBASE')
+cred_info = json.loads(firebase_credentials_str)
+cred = credentials.Certificate(cred_info)
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://forum-44dbd-default-rtdb.firebaseio.com/'
 })
 
-# --- Constants ---
 TMDB_API_KEY = 'fb7bb23f03b6994dafc674c074d01761'
 TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original'
 DATA_JSON_PATH = os.path.join(os.path.dirname(__file__), 'data.json')
 
-# --- Genre Maps (Hebrew) ---
 GENRE_MAP_MOVIE = {
     28: 'פעולה', 12: 'הרפתקאות', 16: 'אנימציה', 35: 'קומדיה', 80: 'פשע',
     99: 'דוקומנטרי', 18: 'דרמה', 10751: 'משפחה', 14: 'פנטזיה', 36: 'היסטוריה',
@@ -53,7 +50,6 @@ GENRE_MAP_TV = {
     10766: 'אופרת סבון', 10767: 'אירוח', 10768: 'מלחמה ופוליטיקה', 37: 'מערבון'
 }
 
-# --- Data Caching Function ---
 def update_data_json_from_db():
     print("Attempting to update data.json from Firebase...")
     categories_ref = db.reference('categories')
@@ -75,8 +71,6 @@ def update_data_json_from_db():
     print("data.json has been updated successfully with category information.")
 
 
-# --- Authentication Routes ---
-
 @app.route('/login')
 def login():
     redirect_uri = url_for('authorize', _external=True)
@@ -94,8 +88,6 @@ def logout():
     session.pop('user', None)
     return redirect('/')
 
-
-# --- HTML Rendering Routes ---
 
 @app.route('/')
 def index():
@@ -115,8 +107,6 @@ def movies_page():
 def shows_page():
     return render_template('shows.html', user=session.get('user'))
 
-
-# --- API Routes: Categories ---
 
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
@@ -141,8 +131,6 @@ def add_category():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
-# --- API Routes: Content (Anime/Movies/Shows) ---
 
 @app.route('/api/anime')
 def get_anime():
@@ -292,8 +280,6 @@ def add_content():
             return jsonify({'error': str(e)}), 500
 
 
-# --- API Routes: System & Cache ---
-
 @app.route('/api/update_json_cache', methods=['POST'])
 def update_json_cache():
     try:
@@ -303,7 +289,6 @@ def update_json_cache():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-# --- App Startup ---
 if __name__ == '__main__':
     if not os.path.exists(DATA_JSON_PATH):
         update_data_json_from_db()
