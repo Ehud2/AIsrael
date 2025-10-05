@@ -9,8 +9,8 @@ from authlib.integrations.flask_client import OAuth
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'a-very-secret-key-for-development-only')
 
-app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID', '367711020009-o70b96v4cv604acg2hqv60k8c5mjmhtr.apps.googleusercontent.com')
-app.config['GOOGLE_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET', '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')
+app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID', '397233505353-iq7ugnl8hf8derontvb1vop8smbd14ou.apps.googleusercontent.com')
+app.config['GOOGLE_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET', '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')
 app.config['GOOGLE_DISCOVERY_URL'] = (
     'https://accounts.google.com/.well-known/openid-configuration'
 )
