@@ -184,20 +184,42 @@
             categoriesContainer.innerHTML = '';
             
             if (data.length === 0) {
-                displayMessage("לא נמצאו תוצאות התואמות את הסינון שלך.");
+                displayMessage("לא נמצאו תוצאות התואמות את החיפוש או הסינון שלך.");
                 return;
             }
 
-            const groupedByCategory = data.reduce((acc, anime) => {
-                const category = anime.categoryName || 'ללא קטגוריה';
-                if (!acc[category]) {
-                    acc[category] = [];
-                }
-                acc[category].push(anime);
-                return acc;
-            }, {});
+            let groupedContent;
 
-            for (const categoryName in groupedByCategory) {
+            if (currentSearch) {
+                groupedContent = data.reduce((acc, anime) => {
+                    const category = anime.type === 'series' ? 'סדרות' : 'סרטים';
+                    if (!acc[category]) {
+                        acc[category] = [];
+                    }
+                    acc[category].push(anime);
+                    return acc;
+                }, {});
+            } else {
+                groupedContent = data.reduce((acc, anime) => {
+                    const category = anime.categoryName || 'ללא קטגוריה';
+                    if (!acc[category]) {
+                        acc[category] = [];
+                    }
+                    acc[category].push(anime);
+                    return acc;
+                }, {});
+            }
+
+            const categoriesInOrder = Object.keys(groupedContent);
+            if(groupedContent['סדרות'] && groupedContent['סרטים']) {
+                categoriesInOrder.sort((a, b) => a === 'סדרות' ? -1 : 1);
+            }
+
+
+            for (const categoryName of categoriesInOrder) {
+                const animeList = groupedContent[categoryName];
+                if(animeList.length === 0) continue;
+
                 const categorySection = document.createElement('section');
                 categorySection.className = 'anime-section';
 
@@ -208,7 +230,7 @@
                 const grid = document.createElement('div');
                 grid.className = 'anime-grid';
 
-                groupedByCategory[categoryName].forEach(anime => {
+                animeList.forEach(anime => {
                     const card = createAnimeCard(anime);
                     grid.appendChild(card);
                 });
