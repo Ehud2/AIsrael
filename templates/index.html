@@ -7,14 +7,18 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Varela+Round&family=Alef:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         .profile-pic {
             width: 40px;
             height: 40px;
             border-radius: 50%;
             cursor: pointer;
-            border: 2px solid #fff;
+            border: 2px solid var(--primary);
+            transition: transform 0.2s ease;
+        }
+        .profile-pic:hover {
+            transform: scale(1.1);
         }
         .user-profile a {
             display: flex;
@@ -28,7 +32,7 @@
             <div class="header-content">
                 <div class="logo">
                     <a href="/" style="text-decoration: none; color: inherit;">
-                        <span class="logo-icon">🎌</span>
+                        <span class="logo-icon">🎬</span>
                         <span class="logo-text">אנימה<span class="logo-plus">פלוס</span></span>
                     </a>
                 </div>
@@ -42,7 +46,7 @@
                 </nav>
                 <div class="header-actions">
                     <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="חיפוש אנימה...">
+                        <input type="text" id="searchInput" placeholder="חיפוש סדרה או סרט...">
                         <span class="search-icon">🔍</span>
                     </div>
                     <div class="user-profile">
@@ -52,7 +56,7 @@
                             </a>
                         {% else %}
                             <a href="{{ url_for('login') }}">
-                                <button class="user-btn">👤</button>
+                                <button class="user-btn">התחברות</button>
                             </a>
                         {% endif %}
                     </div>
@@ -72,16 +76,18 @@
         <div class="container">
             <div class="filter-group">
                 <label class="filter-label">סינון לפי ז'אנר:</label>
-                <select id="genreFilter" class="filter-select">
-                    <option value="all">כל הז'אנרים</option>
-                    <option value="פעולה">פעולה</option>
-                    <option value="הרפתקאות">הרפתקאות</option>
-                    <option value="רומנטיקה">רומנטיקה</option>
-                    <option value="קומדיה">קומדיה</option>
-                    <option value="פנטזיה">פנטזיה</option>
-                    <option value="דרמה">דרמה</option>
-                    <option value="מותחן">מותחן</option>
-                </select>
+                <div class="select-wrapper">
+                    <select id="genreFilter" class="filter-select">
+                        <option value="all">כל הז'אנרים</option>
+                        <option value="פעולה">פעולה</option>
+                        <option value="הרפתקאות">הרפתקאות</option>
+                        <option value="רומנטיקה">רומנטיקה</option>
+                        <option value="קומדיה">קומדיה</option>
+                        <option value="פנטזיה">פנטזיה</option>
+                        <option value="דרמה">דרמה</option>
+                        <option value="מותחן">מותחן</option>
+                    </select>
+                </div>
             </div>
         </div>
     </section>
@@ -110,22 +116,22 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h3>אנימה פלוס</h3>
-                    <p>הפלטפורמה המובילה לצפייה באנימה בישראל</p>
+                    <p>הפלטפורמה המובילה לצפייה באנימה בישראל. כל התכנים במקום אחד.</p>
                 </div>
                 <div class="footer-section">
-                    <h4>קישורים מהירים</h4>
+                    <h4>ניווט מהיר</h4>
                     <ul>
                         <li><a href="#">אודות</a></li>
                         <li><a href="#">יצירת קשר</a></li>
-                        <li><a href="#">תנאי שימוש</a></li>
+                        <li><a href="#">תנאי שימוש ומדיניות פרטיות</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
                     <h4>עקבו אחרינו</h4>
                     <div class="social-links">
-                        <a href="#">📘</a>
-                        <a href="#">📷</a>
-                        <a href="#">🐦</a>
+                        <a href="#" aria-label="Facebook">F</a>
+                        <a href="#" aria-label="Instagram">I</a>
+                        <a href="#" aria-label="Twitter">T</a>
                     </div>
                 </div>
             </div>
@@ -148,7 +154,7 @@
         const loading = document.getElementById('loading');
 
         async function fetchAnimeData() {
-            loading.style.display = 'block';
+            loading.style.display = 'flex';
             categoriesContainer.innerHTML = '';
             
             try {
@@ -184,12 +190,12 @@
             categoriesContainer.innerHTML = '';
             
             if (data.length === 0) {
-                displayMessage("לא נמצאו תוצאות התואמות את הסינון שלך.");
+                displayMessage("לא נמצאו תוצאות התואמות את החיפוש או הסינון.");
                 return;
             }
 
             const groupedByCategory = data.reduce((acc, anime) => {
-                const category = anime.categoryName || 'ללא קטגוריה';
+                const category = anime.categoryName || 'כללי';
                 if (!acc[category]) {
                     acc[category] = [];
                 }
@@ -293,9 +299,9 @@
             
             card.innerHTML = `
                 <div class="anime-image">
-                    <img src="${anime.image}" alt="${anime.title_he}" onerror="this.src='https://placehold.co/300x420/ff6b6b/ffffff?text=Image+Error'">
+                    <img src="${anime.image}" alt="${anime.title_he}" loading="lazy" onerror="this.src='https://placehold.co/300x420/e3e8ee/5f6773?text=תמונה+חסרה'">
                     <div class="anime-overlay">
-                        <button class="play-btn">▶ צפה עכשיו</button>
+                        <button class="play-btn">▶</button>
                     </div>
                     <span class="anime-type">${anime.type === 'series' ? 'סדרה' : 'סרט'}</span>
                 </div>
@@ -338,8 +344,8 @@
                     </div>
                     <div class="modal-details">
                         <div class="modal-actions">
-                            <button class="btn-primary">▶ התחל לצפות</button>
-                            <button class="btn-secondary">➕ הוסף למועדפים</button>
+                            <button class="btn-primary">▶ התחל צפייה</button>
+                            <button class="btn-secondary">➕ הוסף לרשימה</button>
                         </div>
                         <div class="modal-info">
                             <div class="info-row">
