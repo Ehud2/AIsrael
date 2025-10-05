@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול תוכן - אנימה פלוס</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/manage.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>מערכת ניהול תוכן</h1>
+            <a href="/" class="back-link">חזרה לאתר הראשי &rarr;</a>
+        </header>
+        
+        <main class="manage-grid">
+            <div class="form-section">
+                <h2>הוספת תוכן חדש</h2>
+                <div class="form-group">
+                    <label>סוג התוכן:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="typeSeries" name="contentType" value="series" checked>
+                        <label for="typeSeries">סדרה</label>
+                        <input type="radio" id="typeMovie" name="contentType" value="movie">
+                        <label for="typeMovie">סרט</label>
+                        <input type="radio" id="typeEpisode" name="contentType" value="episode">
+                        <label for="typeEpisode">פרק לסדרה קיימת</label>
+                    </div>
+                </div>
+
+                <div id="category-selection-area">
+                    <div class="form-group">
+                        <label for="categorySelect">בחירת קטגוריה:</label>
+                        <select id="categorySelect">
+                            <option value="">טוען קטגוריות...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="searchInput">חיפוש (שם באנגלית):</label>
+                    <div class="search-wrapper">
+                        <input type="text" id="searchInput" placeholder="לדוגמה: Attack on Titan">
+                        <button id="searchBtn">חפש</button>
+                    </div>
+                </div>
+
+                <div id="searchResults" class="results-section"></div>
+            </div>
+
+            <div class="form-section">
+                <h2>ניהול קטגוריות</h2>
+                <div class="form-group">
+                    <label for="newCategoryName">שם קטגוריה חדשה:</label>
+                    <div class="search-wrapper">
+                        <input type="text" id="newCategoryName" placeholder="לדוגמה: אקשן, קומדיה...">
+                        <button id="createCategoryBtn">צור קטגוריה</button>
+                    </div>
+                </div>
+                
+                <h2 style="margin-top: 2rem;">פעולות מערכת</h2>
+                <div class="form-group">
+                     <button id="updateCacheBtn" class="update-button">עדכן קובץ מידע (Cache)</button>
+                </div>
+            </div>
+
+            <div class="preview-section" id="previewSection" style="display: none;">
+                <h2>תצוגה מקדימה והוספה</h2>
+                <div id="previewContent"></div>
+                <div id="additionalFields"></div>
+                <button id="addBtn" class="add-button">הוסף למסד הנתונים</button>
+            </div>
+        </main>
+
+        <div id="statusMessage" class="status-message"></div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const searchResultsContainer = document.getElementById('searchResults');
+        const previewSection = document.getElementById('previewSection');
+        const previewContent = document.getElementById('previewContent');
+        const additionalFieldsContainer = document.getElementById('additionalFields');
+        const addBtn = document.getElementById('addBtn');
+        const updateCacheBtn = document.getElementById('updateCacheBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const categorySelect = document.getElementById('categorySelect');
+        const createCategoryBtn = document.getElementById('createCategoryBtn');
+        const newCategoryNameInput = document.getElementById('newCategoryName');
+        const categorySelectionArea = document.getElementById('category-selection-area');
+
+        let selectedItem = null;
+
+        function getSelectedContentType() {
+            return document.querySelector('input[name="contentType"]:checked').value;
+        }
+        
+        // --- Category Management ---
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                const categories = await response.json();
+                categorySelect.innerHTML = '<option value="">-- בחר קטגוריה --</option>';
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    categorySelect.appendChild(option);
+                });
+            } catch (error) {
+                categorySelect.innerHTML = '<option value="">שגיאה בטעינת קטגוריות</option>';
+                console.error("Failed to load categories:", error);
+            }
+        }
+
+        async function handleCreateCategory() {
+            const name = newCategoryNameInput.value.trim();
+            if (!name) {
+                showStatus('יש להזין שם לקטגוריה', 'error');
+                return;
+            }
+            try {
+                const response = await fetch('/api/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    showStatus(result.message, 'success');
+                    newCategoryNameInput.value = '';
+                    loadCategories(); // Refresh the dropdown
+                } else {
+                    throw new Error(result.error || 'שגיאה ביצירת קטגוריה');
+                }
+            } catch (error) {
+                showStatus(`שגיאה: ${error.message}`, 'error');
+            }
+        }
+        
+        // --- Content Management ---
+        document.querySelectorAll('input[name="contentType"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                resetState();
+                const type = getSelectedContentType();
+                searchInput.placeholder = type === 'episode' ? 'חפש סדרה להוספת פרק' : 'חפש סדרה/סרט חדש';
+                categorySelectionArea.style.display = type === 'episode' ? 'none' : 'block';
+            });
+        });
+        
+        async function handleSearch() {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            const type = getSelectedContentType();
+            const searchType = type === 'movie' ? 'movie' : 'tv';
+
+            searchResultsContainer.innerHTML = '<div class="loader"></div>';
+            previewSection.style.display = 'none';
+
+            try {
+                const response = await fetch(`/api/search_external?query=${encodeURIComponent(query)}&type=${searchType}`);
+                if (!response.ok) throw new Error('שגיאה בחיפוש');
+                const results = await response.json();
+                displaySearchResults(results);
+            } catch (error) {
+                searchResultsContainer.innerHTML = `<p class="error">${error.message}</p>`;
+            }
+        }
+
+        function displaySearchResults(results) {
+            searchResultsContainer.innerHTML = '';
+            if (results.length === 0) {
+                searchResultsContainer.innerHTML = '<p>לא נמצאו תוצאות.</p>';
+                return;
+            }
+            results.forEach(item => {
+                const resultCard = document.createElement('div');
+                resultCard.className = 'result-card';
+                resultCard.innerHTML = `
+                    <img src="${item.poster || 'https://placehold.co/100x150/333/fff?text=N/A'}" alt="Poster">
+                    <div class="result-info">
+                        <h4>${item.title} (${item.year})</h4>
+                        <p>${item.overview ? item.overview.substring(0, 150) + '...' : ''}</p>
+                    </div>
+                `;
+                resultCard.addEventListener('click', () => selectItem(item));
+                searchResultsContainer.appendChild(resultCard);
+            });
+        }
+
+        function selectItem(item) {
+            selectedItem = item;
+            
+            // Highlight selected card visually
+            document.querySelectorAll('.result-card').forEach(card => card.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+
+            previewSection.style.display = 'block';
+            const contentType = getSelectedContentType();
+            
+            previewContent.innerHTML = `
+                <h3>${item.title} (${item.year})</h3>
+                <img src="${item.poster || ''}" alt="Poster" style="max-width: 150px; border-radius: 8px;">
+                <p>${item.overview}</p>
+            `;
+
+            additionalFieldsContainer.innerHTML = '';
+            if (contentType === 'movie') {
+                additionalFieldsContainer.innerHTML = `
+                    <div class="form-group">
+                        <label for="videoUrlInput">קישור וידאו (Google Drive/Mega):</label>
+                        <input type="url" id="videoUrlInput" placeholder="https://...">
+                    </div>
+                `;
+            } else if (contentType === 'episode') {
+                additionalFieldsContainer.innerHTML = `
+                    <div class="form-group">
+                        <label for="seasonInput">מספר עונה:</label>
+                        <input type="number" id="seasonInput" min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="episodeInput">מספר פרק:</label>
+                        <input type="number" id="episodeInput" min="1" value="1">
+                    </div>
+                     <div class="form-group">
+                        <label for="videoUrlInput">קישור וידאו (Google Drive/Mega):</label>
+                        <input type="url" id="videoUrlInput" placeholder="https://...">
+                    </div>
+                `;
+            }
+        }
+
+        async function handleAdd() {
+            if (!selectedItem) return;
+            
+            const contentType = getSelectedContentType();
+            let payload = {};
+
+            if (contentType === 'episode') {
+                payload = {
+                    type: 'episode',
+                    series_id: selectedItem.id,
+                    season: document.getElementById('seasonInput').value,
+                    episode: document.getElementById('episodeInput').value,
+                    video_url: document.getElementById('videoUrlInput').value
+                };
+            } else {
+                const categoryId = categorySelect.value;
+                if (!categoryId) {
+                    showStatus('חובה לבחור קטגוריה', 'error');
+                    return;
+                }
+                payload = {
+                    type: contentType,
+                    tmdb_id: selectedItem.id,
+                    category_id: categoryId
+                };
+                if (contentType === 'movie') {
+                    payload.video_url = document.getElementById('videoUrlInput').value;
+                }
+            }
+            
+            showStatus('מעבד...', 'info');
+
+            try {
+                const response = await fetch('/api/add_content', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    showStatus(result.message, 'success');
+                    resetState();
+                } else {
+                    throw new Error(result.error || 'שגיאה לא ידועה');
+                }
+            } catch (error) {
+                showStatus(`שגיאה: ${error.message}`, 'error');
+            }
+        }
+
+        async function handleUpdateCache() {
+            showStatus('מעדכן את קובץ המידע...', 'info');
+            try {
+                const response = await fetch('/api/update_json_cache', { method: 'POST' });
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'שגיאה בעדכון הקובץ');
+                }
+                showStatus(result.message, 'success');
+            } catch (error) {
+                showStatus(`שגיאה: ${error.message}`, 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type} show`;
+            setTimeout(() => {
+                statusMessage.classList.remove('show');
+            }, 4000);
+        }
+        
+        function resetState() {
+            searchResultsContainer.innerHTML = '';
+            previewSection.style.display = 'none';
+            previewContent.innerHTML = '';
+            additionalFieldsContainer.innerHTML = '';
+            searchInput.value = '';
+            selectedItem = null;
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+        });
+        searchBtn.addEventListener('click', handleSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSearch();
+        });
+        addBtn.addEventListener('click', handleAdd);
+        updateCacheBtn.addEventListener('click', handleUpdateCache);
+        createCategoryBtn.addEventListener('click', handleCreateCategory);
+    </script>
+</body>
+</html>
