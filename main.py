@@ -82,7 +82,14 @@ def login():
 @app.route('/authorize/google')
 def authorize():
     token = oauth.google.authorize_access_token()
-    user_info = oauth.google.parse_id_token(token)
+    # המידע על המשתמש כבר פוענח ונמצא במילון ה-token תחת המפתח 'userinfo'
+    # authlib עשתה את כל האימותים (כולל בדיקת ה-nonce) עבורך.
+    user_info = token.get('userinfo')
+    
+    # בדיקה למקרה שהמידע לא הגיע (לא סביר עם גוגל, אבל נוהג טוב)
+    if not user_info:
+        return "Could not fetch user info from Google.", 400
+        
     session['user'] = user_info
     return redirect('/')
 
