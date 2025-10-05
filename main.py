@@ -5,8 +5,11 @@ import requests
 import os
 import json
 from authlib.integrations.flask_client import OAuth
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'a-very-secret-key-for-development-only')
 
 app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID', '397233505353-iq7ugnl8hf8derontvb1vop8smbd14ou.apps.googleusercontent.com')
