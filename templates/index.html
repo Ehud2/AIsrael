@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אנימה פלוס - סדרות וסרטי אנימה</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Varela+Round&family=Alef:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #fff;
+        }
+        .user-profile a {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="/" style="text-decoration: none; color: inherit;">
+                        <span class="logo-icon">🎌</span>
+                        <span class="logo-text">אנימה<span class="logo-plus">פלוס</span></span>
+                    </a>
+                </div>
+                <nav class="nav">
+                    <a href="/" class="nav-link active">הכל</a>
+                    <a href="/shows" class="nav-link">סדרות</a>
+                    <a href="/movies" class="nav-link">סרטים</a>
+                    {% if user and user.email == 'ehudverbin@gmail.com' %}
+                        <a href="/manage" class="nav-link">ניהול</a>
+                    {% endif %}
+                </nav>
+                <div class="header-actions">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="חיפוש אנימה...">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                    <div class="user-profile">
+                        {% if user %}
+                            <a href="{{ url_for('logout') }}" title="התנתקות">
+                                <img src="{{ user.picture }}" alt="{{ user.name }}" class="profile-pic">
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('login') }}">
+                                <button class="user-btn">👤</button>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div id="heroSlider" class="hero-slider">
+        </div>
+        <div id="heroPagination" class="hero-pagination">
+        </div>
+    </section>
+
+    <section class="filters">
+        <div class="container">
+            <div class="filter-group">
+                <label class="filter-label">סינון לפי ז'אנר:</label>
+                <select id="genreFilter" class="filter-select">
+                    <option value="all">כל הז'אנרים</option>
+                    <option value="פעולה">פעולה</option>
+                    <option value="הרפתקאות">הרפתקאות</option>
+                    <option value="רומנטיקה">רומנטיקה</option>
+                    <option value="קומדיה">קומדיה</option>
+                    <option value="פנטזיה">פנטזיה</option>
+                    <option value="דרמה">דרמה</option>
+                    <option value="מותחן">מותחן</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <main class="main-content">
+        <div class="container">
+            <div id="categoriesContainer">
+            </div>
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="animeModal" class="modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <button class="modal-close">✕</button>
+            <div id="modalBody" class="modal-body">
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>אנימה פלוס</h3>
+                    <p>הפלטפורמה המובילה לצפייה באנימה בישראל</p>
+                </div>
+                <div class="footer-section">
+                    <h4>קישורים מהירים</h4>
+                    <ul>
+                        <li><a href="#">אודות</a></li>
+                        <li><a href="#">יצירת קשר</a></li>
+                        <li><a href="#">תנאי שימוש</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>עקבו אחרינו</h4>
+                    <div class="social-links">
+                        <a href="#">📘</a>
+                        <a href="#">📷</a>
+                        <a href="#">🐦</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 אנימה פלוס. כל הזכויות שמורות.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let currentSearch = '';
+        let currentGenre = 'all';
+        let allAnimeData = [];
+        let heroSlides = [];
+        let heroDots = [];
+        let currentHeroSlide = 0;
+        let heroInterval;
+
+        const categoriesContainer = document.getElementById('categoriesContainer');
+        const loading = document.getElementById('loading');
+
+        async function fetchAnimeData() {
+            loading.style.display = 'block';
+            categoriesContainer.innerHTML = '';
+            
+            try {
+                const url = `/api/anime?search=${encodeURIComponent(currentSearch)}&genre=${currentGenre}`;
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                
+                if (currentSearch === '' && currentGenre === 'all') {
+                    allAnimeData = data;
+                    if (allAnimeData.length > 0) {
+                        const heroData = [...allAnimeData].sort((a,b) => b.rating - a.rating).slice(0, 5);
+                        createHeroBanner(heroData);
+                    }
+                }
+                renderContentByCategories(data);
+
+            } catch (error) {
+                console.error('Failed to fetch anime data:', error);
+                displayMessage("שגיאה בטעינת הנתונים. נסו לרענן את העמוד.");
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        function displayMessage(message) {
+            categoriesContainer.innerHTML = `<p class="grid-message">${message}</p>`;
+        }
+
+        function renderContentByCategories(data) {
+            categoriesContainer.innerHTML = '';
+            
+            if (data.length === 0) {
+                displayMessage("לא נמצאו תוצאות התואמות את הסינון שלך.");
+                return;
+            }
+
+            const groupedByCategory = data.reduce((acc, anime) => {
+                const category = anime.categoryName || 'ללא קטגוריה';
+                if (!acc[category]) {
+                    acc[category] = [];
+                }
+                acc[category].push(anime);
+                return acc;
+            }, {});
+
+            for (const categoryName in groupedByCategory) {
+                const categorySection = document.createElement('section');
+                categorySection.className = 'anime-section';
+
+                const title = document.createElement('h2');
+                title.className = 'section-title';
+                title.textContent = categoryName;
+
+                const grid = document.createElement('div');
+                grid.className = 'anime-grid';
+
+                groupedByCategory[categoryName].forEach(anime => {
+                    const card = createAnimeCard(anime);
+                    grid.appendChild(card);
+                });
+
+                categorySection.appendChild(title);
+                categorySection.appendChild(grid);
+                categoriesContainer.appendChild(categorySection);
+            }
+        }
+
+        function createHeroBanner(animeList) {
+            const sliderContainer = document.getElementById('heroSlider');
+            const paginationContainer = document.getElementById('heroPagination');
+            sliderContainer.innerHTML = '';
+            paginationContainer.innerHTML = '';
+
+            if (animeList.length === 0) return;
+
+            animeList.forEach((anime, index) => {
+                const slide = document.createElement('div');
+                slide.className = 'hero-slide';
+                const bannerImage = anime.banner || anime.image;
+                slide.style.backgroundImage = `url('${bannerImage}')`;
+                
+                slide.innerHTML = `
+                    <div class="hero-slide-overlay"></div>
+                    <div class="container">
+                        <div class="hero-slide-content">
+                            <h1 class="hero-slide-title">${anime.title_he}</h1>
+                            <p class="hero-slide-description">${anime.description ? anime.description.substring(0, 150) + '...' : ''}</p>
+                            <button class="hero-slide-btn">צפה בפרטים</button>
+                        </div>
+                    </div>
+                `;
+                slide.querySelector('.hero-slide-btn').onclick = () => openModal(anime.id);
+                sliderContainer.appendChild(slide);
+
+                const dot = document.createElement('span');
+                dot.className = 'hero-dot';
+                dot.onclick = () => { showHeroSlide(index); resetHeroInterval(); };
+                paginationContainer.appendChild(dot);
+            });
+
+            heroSlides = document.querySelectorAll('.hero-slide');
+            heroDots = document.querySelectorAll('.hero-dot');
+            
+            if (heroSlides.length > 0) {
+                showHeroSlide(0);
+                startHeroInterval();
+            }
+        }
+
+        function showHeroSlide(index) {
+            if (heroSlides.length === 0) return;
+            heroSlides.forEach(slide => slide.classList.remove('active'));
+            heroDots.forEach(dot => dot.classList.remove('active'));
+            heroSlides[index].classList.add('active');
+            heroDots[index].classList.add('active');
+            document.getElementById('heroSlider').style.transform = `translateX(-${index * 100}%)`;
+            currentHeroSlide = index;
+        }
+
+        function nextHeroSlide() {
+            if (heroSlides.length === 0) return;
+            let nextIndex = (currentHeroSlide + 1) % heroSlides.length;
+            showHeroSlide(nextIndex);
+        }
+        
+        function startHeroInterval() {
+            clearInterval(heroInterval);
+            heroInterval = setInterval(nextHeroSlide, 5000);
+        }
+
+        function resetHeroInterval() {
+            startHeroInterval();
+        }
+
+        function createAnimeCard(anime) {
+            const card = document.createElement('div');
+            card.className = 'anime-card';
+            card.onclick = () => openModal(anime.id);
+            
+            card.innerHTML = `
+                <div class="anime-image">
+                    <img src="${anime.image}" alt="${anime.title_he}" onerror="this.src='https://placehold.co/300x420/ff6b6b/ffffff?text=Image+Error'">
+                    <div class="anime-overlay">
+                        <button class="play-btn">▶ צפה עכשיו</button>
+                    </div>
+                    <span class="anime-type">${anime.type === 'series' ? 'סדרה' : 'סרט'}</span>
+                </div>
+                <div class="anime-info">
+                    <h3 class="anime-title">${anime.title_he}</h3>
+                    <div class="anime-meta">
+                        <span class="rating">⭐ ${anime.rating}</span>
+                        <span class="year">${anime.year}</span>
+                    </div>
+                    <div class="anime-genres">
+                        ${(anime.genre || []).slice(0, 2).map(g => `<span class="genre-tag">${g}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        async function openModal(animeId) {
+            const modal = document.getElementById('animeModal');
+            const modalBody = document.getElementById('modalBody');
+            
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            modalBody.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                const response = await fetch(`/api/anime/${animeId}`);
+                if (!response.ok) throw new Error('Failed to fetch anime details');
+                const anime = await response.json();
+
+                if (!anime) throw new Error('Anime not found');
+                
+                modalBody.innerHTML = `
+                    <div class="modal-hero">
+                        <img src="${anime.banner || anime.image}" alt="${anime.title_he}">
+                        <div class="modal-hero-overlay">
+                            <h2>${anime.title_he}</h2>
+                            <p class="modal-subtitle">${anime.title}</p>
+                        </div>
+                    </div>
+                    <div class="modal-details">
+                        <div class="modal-actions">
+                            <button class="btn-primary">▶ התחל לצפות</button>
+                            <button class="btn-secondary">➕ הוסף למועדפים</button>
+                        </div>
+                        <div class="modal-info">
+                            <div class="info-row">
+                                <span class="info-label">דירוג:</span>
+                                <span class="info-value">⭐ ${anime.rating}/10</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">שנה:</span>
+                                <span class="info-value">${anime.year}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">${anime.type === 'series' ? 'פרקים' : 'משך'}:</span>
+                                <span class="info-value">${anime.episodes || (anime.duration ? anime.duration + ' דקות' : 'לא ידוע')}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">ז'אנרים:</span>
+                                <span class="info-value">${(anime.genre || []).join(', ')}</span>
+                            </div>
+                        </div>
+                        <div class="modal-description">
+                            <h3>תקציר</h3>
+                            <p>${anime.description}</p>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('שגיאה בטעינת פרטי אנימה:', error);
+                modalBody.innerHTML = `<div class="modal-error"><h3>אופס!</h3><p>אירעה שגיאה בטעינת פרטי האנימה. נסו שנית מאוחר יותר.</p></div>`;
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('animeModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAnimeData();
+            
+            document.getElementById('searchInput').addEventListener('input', debounce(e => { 
+                currentSearch = e.target.value;
+                fetchAnimeData();
+            }, 300));
+
+            document.getElementById('genreFilter').addEventListener('change', (e) => { 
+                currentGenre = e.target.value;
+                fetchAnimeData();
+            });
+            
+            document.querySelector('.modal-close').addEventListener('click', closeModal);
+            document.querySelector('.modal-overlay').addEventListener('click', closeModal);
+        });
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => { clearTimeout(timeout); func(...args); };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
+</body>
+</html>
