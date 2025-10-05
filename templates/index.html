@@ -41,10 +41,6 @@
                     {% endif %}
                 </nav>
                 <div class="header-actions">
-                    <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="חיפוש אנימה...">
-                        <span class="search-icon">🔍</span>
-                    </div>
                     <div class="user-profile">
                         {% if user %}
                             <a href="{{ url_for('logout') }}" title="התנתקות">
@@ -68,8 +64,12 @@
         </div>
     </section>
 
-    <section class="filters">
+    <section class="search-and-filters">
         <div class="container">
+            <div class="main-search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="חיפוש סדרות, סרטים ועוד...">
+            </div>
             <div class="filter-group">
                 <label class="filter-label">סינון לפי ז'אנר:</label>
                 <select id="genreFilter" class="filter-select">
