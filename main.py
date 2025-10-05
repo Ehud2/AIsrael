@@ -76,7 +76,7 @@ def login():
     redirect_uri = url_for('authorize', _external=True)
     return oauth.google.authorize_redirect(redirect_uri)
 
-@app.route('/authorize')
+@app.route('/authorize/google')
 def authorize():
     token = oauth.google.authorize_access_token()
     user_info = oauth.google.parse_id_token(token)
