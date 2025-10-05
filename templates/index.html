@@ -14,11 +14,7 @@
             height: 40px;
             border-radius: 50%;
             cursor: pointer;
-            border: 2px solid var(--primary);
-            transition: transform 0.2s ease;
-        }
-        .profile-pic:hover {
-            transform: scale(1.1);
+            border: 2px solid #e2e8f0;
         }
         .user-profile a {
             display: flex;
@@ -32,7 +28,7 @@
             <div class="header-content">
                 <div class="logo">
                     <a href="/" style="text-decoration: none; color: inherit;">
-                        <span class="logo-icon">🎬</span>
+                        <span class="logo-icon">🌸</span>
                         <span class="logo-text">אנימה<span class="logo-plus">פלוס</span></span>
                     </a>
                 </div>
@@ -46,7 +42,7 @@
                 </nav>
                 <div class="header-actions">
                     <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="חיפוש סדרה או סרט...">
+                        <input type="text" id="searchInput" placeholder="חיפוש אנימה...">
                         <span class="search-icon">🔍</span>
                     </div>
                     <div class="user-profile">
@@ -56,7 +52,7 @@
                             </a>
                         {% else %}
                             <a href="{{ url_for('login') }}">
-                                <button class="user-btn">התחברות</button>
+                                <button class="user-btn">👤</button>
                             </a>
                         {% endif %}
                     </div>
@@ -76,18 +72,16 @@
         <div class="container">
             <div class="filter-group">
                 <label class="filter-label">סינון לפי ז'אנר:</label>
-                <div class="select-wrapper">
-                    <select id="genreFilter" class="filter-select">
-                        <option value="all">כל הז'אנרים</option>
-                        <option value="פעולה">פעולה</option>
-                        <option value="הרפתקאות">הרפתקאות</option>
-                        <option value="רומנטיקה">רומנטיקה</option>
-                        <option value="קומדיה">קומדיה</option>
-                        <option value="פנטזיה">פנטזיה</option>
-                        <option value="דרמה">דרמה</option>
-                        <option value="מותחן">מותחן</option>
-                    </select>
-                </div>
+                <select id="genreFilter" class="filter-select">
+                    <option value="all">כל הז'אנרים</option>
+                    <option value="פעולה">פעולה</option>
+                    <option value="הרפתקאות">הרפתקאות</option>
+                    <option value="רומנטיקה">רומנטיקה</option>
+                    <option value="קומדיה">קומדיה</option>
+                    <option value="פנטזיה">פנטזיה</option>
+                    <option value="דרמה">דרמה</option>
+                    <option value="מותחן">מותחן</option>
+                </select>
             </div>
         </div>
     </section>
@@ -116,22 +110,22 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h3>אנימה פלוס</h3>
-                    <p>הפלטפורמה המובילה לצפייה באנימה בישראל. כל התכנים במקום אחד.</p>
+                    <p>הפלטפורמה המובילה לצפייה באנימה בישראל</p>
                 </div>
                 <div class="footer-section">
-                    <h4>ניווט מהיר</h4>
+                    <h4>קישורים מהירים</h4>
                     <ul>
                         <li><a href="#">אודות</a></li>
                         <li><a href="#">יצירת קשר</a></li>
-                        <li><a href="#">תנאי שימוש ומדיניות פרטיות</a></li>
+                        <li><a href="#">תנאי שימוש</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
                     <h4>עקבו אחרינו</h4>
                     <div class="social-links">
-                        <a href="#" aria-label="Facebook">F</a>
-                        <a href="#" aria-label="Instagram">I</a>
-                        <a href="#" aria-label="Twitter">T</a>
+                        <a href="#">📘</a>
+                        <a href="#">📷</a>
+                        <a href="#">🐦</a>
                     </div>
                 </div>
             </div>
@@ -190,12 +184,12 @@
             categoriesContainer.innerHTML = '';
             
             if (data.length === 0) {
-                displayMessage("לא נמצאו תוצאות התואמות את החיפוש או הסינון.");
+                displayMessage("לא נמצאו תוצאות התואמות את הסינון שלך.");
                 return;
             }
 
             const groupedByCategory = data.reduce((acc, anime) => {
-                const category = anime.categoryName || 'כללי';
+                const category = anime.categoryName || 'ללא קטגוריה';
                 if (!acc[category]) {
                     acc[category] = [];
                 }
@@ -299,9 +293,9 @@
             
             card.innerHTML = `
                 <div class="anime-image">
-                    <img src="${anime.image}" alt="${anime.title_he}" loading="lazy" onerror="this.src='https://placehold.co/300x420/e3e8ee/5f6773?text=תמונה+חסרה'">
+                    <img src="${anime.image}" alt="${anime.title_he}" onerror="this.src='https://placehold.co/300x420/cccccc/ffffff?text=Image+Error'">
                     <div class="anime-overlay">
-                        <button class="play-btn">▶</button>
+                        <button class="play-btn">▶ צפה עכשיו</button>
                     </div>
                     <span class="anime-type">${anime.type === 'series' ? 'סדרה' : 'סרט'}</span>
                 </div>
@@ -344,8 +338,8 @@
                     </div>
                     <div class="modal-details">
                         <div class="modal-actions">
-                            <button class="btn-primary">▶ התחל צפייה</button>
-                            <button class="btn-secondary">➕ הוסף לרשימה</button>
+                            <button class="btn-primary">▶ התחל לצפות</button>
+                            <button class="btn-secondary">➕ הוסף למועדפים</button>
                         </div>
                         <div class="modal-info">
                             <div class="info-row">
