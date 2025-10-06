@@ -1,211 +1,198 @@
 <!DOCTYPE html>
-<html lang="{{ current_language }}" dir="{{ 'rtl' if current_language == 'he' else 'ltr' }}">
+<html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% set display_title = (series.HebrewName if current_language == 'he' and series.HebrewName else series.title) or (series.title if not series.HebrewName) %}
-    <title>{{ display_title }} - סרטים אונליין</title>
+    <title>{{ series.title_he }} - אנימה פלוס</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/series.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-    <link rel="icon" href="/static/images/MoviesIL Logo.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #e2e8f0;
+        }
+        .user-profile a {
+            display: flex;
+            align-items: center;
+        }
+    </style>
 </head>
 <body>
-    <header class="site-header scrolled">
-        <div class="container header-content">
-             <div class="logo">
-                 <a href="{{ url_for('index') }}">
-                     <img src="/static/images/MoviesIL Logo.png" alt="Sratims Online Logo">
-                     <span>Sratims Online</span>
-                 </a>
-             </div>
-             
-             <nav class="main-nav">
-                <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> <span>{{ 'בית' if current_language == 'he' else 'Home' }}</span></a>
-                <a href="{{ url_for('all_movies') }}"><i class="fas fa-film"></i> <span>{{ 'סרטים' if current_language == 'he' else 'Movies' }}</span></a>
-                <a href="{{ url_for('all_series') }}"><i class="fas fa-tv"></i> <span>{{ 'סדרות' if current_language == 'he' else 'Series' }}</span></a>
-                {% if user and user.email in admin_emails %}
-                    <a href="{{ url_for('add_content') }}"><i class="fas fa-plus-circle"></i> <span>{{ 'הוספת תוכן' if current_language == 'he' else 'Add Content' }}</span></a>
-                {% endif %}
-            </nav>
-
-            <div class="header-actions">
-                 <div class="auth-container">
-                     {% if user %}
-                         <a href="{{ url_for('logout') }}" class="profile-button">
-                             <img src="{{ user.picture or url_for('static', filename='images/default-profile.png') }}" alt="{{ user.name or 'User' }} Profile">
-                         </a>
-                     {% else %}
-                         <a href="{{ url_for('google_login') }}" class="google-login-button">
-                             <span>{{ 'התחברות' if current_language == 'he' else 'Sign In' }}</span>
-                         </a>
-                     {% endif %}
-                 </div>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="/" style="text-decoration: none; color: inherit;">
+                        <span class="logo-icon">🌸</span>
+                        <span class="logo-text">אנימה<span class="logo-plus">פלוס</span></span>
+                    </a>
+                </div>
+                <nav class="nav">
+                    <a href="/">הכל</a>
+                    <a href="/shows">סדרות</a>
+                    <a href="/movies">סרטים</a>
+                     {% if user and user.email == 'ehudverbin@gmail.com' %}
+                        <a href="/manage" class="nav-link">ניהול</a>
+                    {% endif %}
+                </nav>
+                <div class="header-actions">
+                     <div class="user-profile">
+                        {% if user %}
+                            <a href="{{ url_for('logout') }}" title="התנתקות">
+                                <img src="{{ user.picture }}" alt="{{ user.name }}" class="profile-pic">
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('login') }}">
+                                <button class="user-btn">👤</button>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </header>
 
-    <main>
-        <div class="series-container container">
-            <div class="series-player-area">
-                <div class="video-player-wrapper">
-                    <iframe id="video-player" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-                </div>
-                <h2 id="current-episode-title">{{ 'בחר פרק לצפייה' if current_language == 'he' else 'Select an episode to watch' }}</h2>
-            </div>
-            <div class="series-controls-area">
-                <div class="selectors">
-                    <label for="season-selector">{{ 'בחר עונה:' if current_language == 'he' else 'Select Season:' }}</label>
-                    <select id="season-selector"></select>
-                </div>
-                <ul id="episode-list">
-                </ul>
-            </div>
-            <div class="series-info-area">
-                {% set display_poster = (series.HebrewPoster if current_language == 'he' and series.HebrewPoster else series.poster) or (series.poster if not series.HebrewPoster) %}
-                <img src="{{ display_poster if display_poster and display_poster != 'N/A' else url_for('static', filename='images/no_poster.png') }}" alt="{{ display_title }}" class="series-poster">
-                <div class="series-details">
-                    <h1>{{ display_title }}</h1>
-                    {% if series.imdbRating and series.imdbRating != 'N/A' %}
-                        <div class="rating-box">
-                            <i class="fas fa-star"></i> {{ series.imdbRating }}
+    <main class="main-content">
+        <div class="container series-page-container">
+            <div class="series-content-wrapper">
+                <div class="video-player-section">
+                    <div id="videoPlayerContainer" class="video-player-container">
+                        <iframe id="videoPlayer" src="" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <div class="series-details-content">
+                        <h1 class="series-title">{{ series.title_he }}</h1>
+                        <div class="series-meta">
+                            <span>⭐ {{ series.rating }}/10</span>
+                            <span> | </span>
+                            <span>{{ series.year }}</span>
+                            <span> | </span>
+                            <span>{{ series.genre | join(', ') }}</span>
                         </div>
-                    {% endif %}
-                    <p class="series-plot">{{ series.plot }}</p>
+                        <p class="series-description">{{ series.description }}</p>
+                    </div>
+                </div>
+
+                <div class="episodes-panel">
+                    <div class="seasons-tabs" id="seasonsTabs">
+                    </div>
+                    <div class="episodes-list" id="episodesList">
+                    </div>
                 </div>
             </div>
         </div>
     </main>
-
-    <footer class="site-footer-bottom">
-        <div class="container">
-            <p>סרטים אונליין - סרטימס אונליין / Sratim Online - Sratims Online</p>
-        </div>
-    </footer>
     
     <script>
         const seriesData = {{ series | tojson }};
-        const currentLanguage = {{ current_language | tojson }};
+        const seasonsTabsContainer = document.getElementById('seasonsTabs');
+        const episodesListContainer = document.getElementById('episodesList');
+        const videoPlayer = document.getElementById('videoPlayer');
+
+        let currentSeason = null;
+        let currentEpisode = null;
+
+        function getEmbedUrl(originalUrl) {
+            if (!originalUrl) return '';
+            
+            if (originalUrl.includes('drive.google.com')) {
+                const fileId = originalUrl.split('/d/')[1].split('/')[0];
+                return `https://drive.google.com/file/d/${fileId}/preview`;
+            }
+            if (originalUrl.includes('mega.nz')) {
+                const parts = originalUrl.split('/');
+                const fileIdWithKey = parts[parts.length - 1];
+                const [fileId, key] = fileIdWithKey.split('#');
+                const embedId = key ? fileId.replace('file/', '') + '!' + key.replace('!','') : fileId.replace('file/', '');
+                return `https://mega.nz/embed/${embedId}`;
+            }
+            return originalUrl;
+        }
+
+        function playEpisode(seasonNum, episodeNum, videoUrl) {
+            const embedUrl = getEmbedUrl(videoUrl);
+            if (videoPlayer.src !== embedUrl) {
+                videoPlayer.src = embedUrl;
+            }
+
+            currentSeason = seasonNum;
+            currentEpisode = episodeNum;
+
+            document.querySelectorAll('.episode-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const activeEpisodeElement = document.querySelector(`.episode-item[data-season='${seasonNum}'][data-episode='${episodeNum}']`);
+            if (activeEpisodeElement) {
+                activeEpisodeElement.classList.add('active');
+            }
+        }
+
+        function renderEpisodes(seasonNum) {
+            episodesListContainer.innerHTML = '';
+            const season = seriesData.seasons[seasonNum];
+            if (!season || !season.episodes) {
+                episodesListContainer.innerHTML = '<p>לא נמצאו פרקים לעונה זו.</p>';
+                return;
+            }
+
+            const episodes = season.episodes;
+            Object.keys(episodes).forEach(episodeNum => {
+                const episode = episodes[episodeNum];
+                const episodeElement = document.createElement('div');
+                episodeElement.className = 'episode-item';
+                episodeElement.textContent = `פרק ${episodeNum}`;
+                episodeElement.dataset.season = seasonNum;
+                episodeElement.dataset.episode = episodeNum;
+                episodeElement.onclick = () => playEpisode(seasonNum, episodeNum, episode.video_url);
+                episodesListContainer.appendChild(episodeElement);
+            });
+            
+            document.querySelectorAll('.season-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.season == seasonNum);
+            });
+        }
+        
+        function renderSeasons() {
+            if (!seriesData.seasons) {
+                 seasonsTabsContainer.innerHTML = '<p>לא נמצאו עונות לסדרה זו.</p>';
+                 return;
+            }
+            const seasonKeys = Object.keys(seriesData.seasons);
+            seasonKeys.forEach(seasonNum => {
+                const seasonTab = document.createElement('button');
+                seasonTab.className = 'season-tab';
+                seasonTab.textContent = `עונה ${seasonNum}`;
+                seasonTab.dataset.season = seasonNum;
+                seasonTab.onclick = () => renderEpisodes(seasonNum);
+                seasonsTabsContainer.appendChild(seasonTab);
+            });
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const seasonSelector = document.getElementById('season-selector');
-            const episodeList = document.getElementById('episode-list');
-            const videoPlayer = document.getElementById('video-player');
-            const currentEpisodeTitle = document.getElementById('current-episode-title');
+            renderSeasons();
+            const seasonKeys = seriesData.seasons ? Object.keys(seriesData.seasons) : [];
+            if (seasonKeys.length > 0) {
+                const firstSeasonNum = seasonKeys[0];
+                renderEpisodes(firstSeasonNum);
 
-            function updatePlayer(videoUrl) {
-                let embedUrl = '';
-                if (!videoUrl || videoUrl.trim() === '') {
-                    videoPlayer.src = 'about:blank';
-                    currentEpisodeTitle.textContent = currentLanguage === 'he' ? 'לא נמצא קישור וידאו לפרק זה.' : 'No video link found for this episode.';
-                    return;
-                }
-
-                if (videoUrl.includes('drive.google.com')) {
-                    const driveIdMatch = videoUrl.match(/file\/d\/([a-zA-Z0-9_-]+)/);
-                    if (driveIdMatch && driveIdMatch[1]) {
-                        embedUrl = `https://drive.google.com/file/d/${driveIdMatch[1]}/preview`;
-                    }
-                } else if (videoUrl.includes('mega.nz')) {
-                    const megaIdMatch = videoUrl.match(/(?:embed|file)\/([a-zA-Z0-9!_-]+)/);
-                    if (megaIdMatch && megaIdMatch[1]) {
-                        embedUrl = `https://mega.nz/embed/${megaIdMatch[1]}`;
+                const firstSeason = seriesData.seasons[firstSeasonNum];
+                if (firstSeason && firstSeason.episodes) {
+                    const episodeKeys = Object.keys(firstSeason.episodes);
+                    if (episodeKeys.length > 0) {
+                        const firstEpisodeNum = episodeKeys[0];
+                        const firstEpisode = firstSeason.episodes[firstEpisodeNum];
+                        playEpisode(firstSeasonNum, firstEpisodeNum, firstEpisode.video_url);
                     }
                 }
-
-                if (embedUrl) {
-                    videoPlayer.src = embedUrl;
-                } else {
-                    videoPlayer.src = 'about:blank';
-                    currentEpisodeTitle.textContent = currentLanguage === 'he' ? 'פורמט הקישור אינו נתמך.' : 'Link format not supported.';
-                }
+            } else {
+                 episodesListContainer.innerHTML = '<p>לא נמצאו פרקים לסדרה זו.</p>';
+                 videoPlayer.style.display = 'none';
             }
-
-            function selectEpisode(seasonNum, episodeNum) {
-                const episode = seriesData.Seasons?.[seasonNum]?.Episodes?.[episodeNum];
-                if (!episode) return;
-                
-                document.querySelectorAll('#episode-list a').forEach(el => el.classList.remove('active-episode'));
-                const activeLink = document.querySelector(`#episode-list a[data-season='${seasonNum}'][data-episode='${episodeNum}']`);
-                if(activeLink) {
-                    activeLink.classList.add('active-episode');
-                    activeLink.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-
-                currentEpisodeTitle.textContent = episode.title || `Episode ${episodeNum}`;
-                updatePlayer(episode.video_url);
-            }
-
-            function populateEpisodes(seasonNum) {
-                episodeList.innerHTML = '';
-                const season = seriesData.Seasons?.[seasonNum];
-                if (!season || !season.Episodes) return;
-
-                const sortedEpisodes = Object.values(season.Episodes).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
-
-                sortedEpisodes.forEach(episode => {
-                    const li = document.createElement('li');
-                    const a = document.createElement('a');
-                    a.href = '#';
-                    a.dataset.season = seasonNum;
-                    a.dataset.episode = episode.episode_number;
-                    a.innerHTML = `<span class="ep-number">${episode.episode_number}</span> <span class="ep-title">${episode.title}</span>`;
-                    
-                    a.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        selectEpisode(seasonNum, episode.episode_number);
-                        const newUrl = `${window.location.protocol}//${window.location.host}/series/${seriesData.imdbID}/${seasonNum}/${episode.episode_number}`;
-                        window.history.pushState({path: newUrl}, '', newUrl);
-                    });
-                    
-                    li.appendChild(a);
-                    episodeList.appendChild(li);
-                });
-            }
-
-            function populateSeasons() {
-                if (!seriesData.Seasons) return;
-                const sortedSeasons = Object.keys(seriesData.Seasons).sort((a, b) => parseInt(a) - parseInt(b));
-
-                sortedSeasons.forEach(seasonNum => {
-                    const option = document.createElement('option');
-                    option.value = seasonNum;
-                    option.textContent = `${currentLanguage === 'he' ? 'עונה' : 'Season'} ${seasonNum}`;
-                    seasonSelector.appendChild(option);
-                });
-
-                seasonSelector.addEventListener('change', () => {
-                    populateEpisodes(seasonSelector.value);
-                });
-            }
-
-            function initialize() {
-                populateSeasons();
-                
-                const pathParts = window.location.pathname.split('/');
-                let initialSeason = pathParts[3] ? parseInt(pathParts[3], 10) : null;
-                let initialEpisode = pathParts[4] ? parseInt(pathParts[4], 10) : null;
-                
-                if (!seriesData.Seasons?.[initialSeason]?.Episodes?.[initialEpisode]) {
-                    initialSeason = Object.keys(seriesData.Seasons || {}).sort((a, b) => parseInt(a) - parseInt(b))[0];
-                     if(initialSeason) {
-                        initialEpisode = Object.keys(seriesData.Seasons[initialSeason].Episodes || {}).sort((a, b) => parseInt(a) - parseInt(b))[0];
-                     }
-                }
-                
-                if (initialSeason) {
-                    seasonSelector.value = initialSeason;
-                    populateEpisodes(initialSeason);
-                    if (initialEpisode) {
-                        selectEpisode(initialSeason, initialEpisode);
-                    }
-                }
-            }
-            
-            initialize();
         });
     </script>
 </body>
