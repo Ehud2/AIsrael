@@ -34,9 +34,9 @@
                     </a>
                 </div>
                 <nav class="nav">
-                    <a href="/">הכל</a>
-                    <a href="/shows">סדרות</a>
-                    <a href="/movies">סרטים</a>
+                    <a href="/" class="nav-link">הכל</a>
+                    <a href="/shows" class="nav-link active">סדרות</a>
+                    <a href="/movies" class="nav-link">סרטים</a>
                      {% if user and user.email == 'ehudverbin@gmail.com' %}
                         <a href="/manage" class="nav-link">ניהול</a>
                     {% endif %}
@@ -79,9 +79,11 @@
                 </div>
 
                 <div class="episodes-panel">
-                    <div class="seasons-tabs" id="seasonsTabs">
+                    <div class="panel-header">
+                        <h3>פרקים</h3>
                     </div>
-                    <div class="episodes-list" id="episodesList">
+                    <div id="seasonsAccordion" class="seasons-accordion">
+                        
                     </div>
                 </div>
             </div>
@@ -90,12 +92,8 @@
     
     <script>
         const seriesData = {{ series | tojson }};
-        const seasonsTabsContainer = document.getElementById('seasonsTabs');
-        const episodesListContainer = document.getElementById('episodesList');
+        const accordionContainer = document.getElementById('seasonsAccordion');
         const videoPlayer = document.getElementById('videoPlayer');
-
-        let currentSeason = null;
-        let currentEpisode = null;
 
         function getEmbedUrl(originalUrl) {
             if (!originalUrl) return '';
@@ -107,9 +105,7 @@
             if (originalUrl.includes('mega.nz')) {
                 const parts = originalUrl.split('/');
                 const fileIdWithKey = parts[parts.length - 1];
-                const [fileId, key] = fileIdWithKey.split('#');
-                const embedId = key ? fileId.replace('file/', '') + '!' + key.replace('!','') : fileId.replace('file/', '');
-                return `https://mega.nz/embed/${embedId}`;
+                return `https://mega.nz/embed/${fileIdWithKey.replace('file/', '')}`;
             }
             return originalUrl;
         }
@@ -120,9 +116,6 @@
                 videoPlayer.src = embedUrl;
             }
 
-            currentSeason = seasonNum;
-            currentEpisode = episodeNum;
-
             document.querySelectorAll('.episode-item').forEach(item => {
                 item.classList.remove('active');
             });
@@ -132,66 +125,75 @@
             }
         }
 
-        function renderEpisodes(seasonNum) {
-            episodesListContainer.innerHTML = '';
-            const season = seriesData.seasons[seasonNum];
-            if (!season || !season.episodes) {
-                episodesListContainer.innerHTML = '<p>לא נמצאו פרקים לעונה זו.</p>';
+        function renderAccordion() {
+            if (!seriesData.seasons || Object.keys(seriesData.seasons).length === 0) {
+                accordionContainer.innerHTML = '<p class="no-content-message">לא נמצאו עונות לסדרה זו.</p>';
                 return;
             }
 
-            const episodes = season.episodes;
-            Object.keys(episodes).forEach(episodeNum => {
-                const episode = episodes[episodeNum];
-                const episodeElement = document.createElement('div');
-                episodeElement.className = 'episode-item';
-                episodeElement.textContent = `פרק ${episodeNum}`;
-                episodeElement.dataset.season = seasonNum;
-                episodeElement.dataset.episode = episodeNum;
-                episodeElement.onclick = () => playEpisode(seasonNum, episodeNum, episode.video_url);
-                episodesListContainer.appendChild(episodeElement);
-            });
-            
-            document.querySelectorAll('.season-tab').forEach(tab => {
-                tab.classList.toggle('active', tab.dataset.season == seasonNum);
+            const seasonKeys = Object.keys(seriesData.seasons);
+            seasonKeys.forEach(seasonNum => {
+                const season = seriesData.seasons[seasonNum];
+
+                const seasonItem = document.createElement('div');
+                seasonItem.className = 'season-item';
+                
+                const seasonHeader = document.createElement('button');
+                seasonHeader.className = 'season-header';
+                seasonHeader.innerHTML = `<span>עונה ${seasonNum}</span> <span class="arrow-icon"></span>`;
+
+                const episodesList = document.createElement('div');
+                episodesList.className = 'episodes-list';
+
+                if (season.episodes && Object.keys(season.episodes).length > 0) {
+                    const episodeKeys = Object.keys(season.episodes);
+                     episodeKeys.forEach(episodeNum => {
+                        const episode = season.episodes[episodeNum];
+                        const episodeElement = document.createElement('div');
+                        episodeElement.className = 'episode-item';
+                        episodeElement.textContent = `פרק ${episodeNum}`;
+                        episodeElement.dataset.season = seasonNum;
+                        episodeElement.dataset.episode = episodeNum;
+                        episodeElement.onclick = (e) => {
+                            e.stopPropagation();
+                            playEpisode(seasonNum, episodeNum, episode.video_url);
+                        };
+                        episodesList.appendChild(episodeElement);
+                    });
+                } else {
+                    episodesList.innerHTML = '<p class="no-content-message">לא נמצאו פרקים לעונה זו.</p>';
+                }
+
+                seasonHeader.onclick = () => {
+                    const isActive = seasonItem.classList.contains('active');
+                    document.querySelectorAll('.season-item').forEach(item => item.classList.remove('active'));
+                    if (!isActive) {
+                        seasonItem.classList.add('active');
+                    }
+                };
+
+                seasonItem.appendChild(seasonHeader);
+                seasonItem.appendChild(episodesList);
+                accordionContainer.appendChild(seasonItem);
             });
         }
         
-        function renderSeasons() {
-            if (!seriesData.seasons) {
-                 seasonsTabsContainer.innerHTML = '<p>לא נמצאו עונות לסדרה זו.</p>';
-                 return;
-            }
-            const seasonKeys = Object.keys(seriesData.seasons);
-            seasonKeys.forEach(seasonNum => {
-                const seasonTab = document.createElement('button');
-                seasonTab.className = 'season-tab';
-                seasonTab.textContent = `עונה ${seasonNum}`;
-                seasonTab.dataset.season = seasonNum;
-                seasonTab.onclick = () => renderEpisodes(seasonNum);
-                seasonsTabsContainer.appendChild(seasonTab);
-            });
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
-            renderSeasons();
-            const seasonKeys = seriesData.seasons ? Object.keys(seriesData.seasons) : [];
-            if (seasonKeys.length > 0) {
-                const firstSeasonNum = seasonKeys[0];
-                renderEpisodes(firstSeasonNum);
-
-                const firstSeason = seriesData.seasons[firstSeasonNum];
-                if (firstSeason && firstSeason.episodes) {
-                    const episodeKeys = Object.keys(firstSeason.episodes);
-                    if (episodeKeys.length > 0) {
-                        const firstEpisodeNum = episodeKeys[0];
-                        const firstEpisode = firstSeason.episodes[firstEpisodeNum];
-                        playEpisode(firstSeasonNum, firstEpisodeNum, firstEpisode.video_url);
-                    }
+            renderAccordion();
+            
+            const firstSeasonItem = document.querySelector('.season-item');
+            if (firstSeasonItem) {
+                firstSeasonItem.classList.add('active');
+                const firstEpisodeItem = firstSeasonItem.querySelector('.episode-item');
+                if (firstEpisodeItem) {
+                    firstEpisodeItem.click();
+                } else {
+                    videoPlayer.style.display = 'none';
+                    document.getElementById('videoPlayerContainer').innerHTML = '<p class="no-content-message">לא נמצא פרק להתחלת הצפייה.</p>';
                 }
             } else {
-                 episodesListContainer.innerHTML = '<p>לא נמצאו פרקים לסדרה זו.</p>';
-                 videoPlayer.style.display = 'none';
+                videoPlayer.style.display = 'none';
+                 document.getElementById('videoPlayerContainer').innerHTML = '<p class="no-content-message">לא נמצא תוכן לצפייה.</p>';
             }
         });
     </script>
