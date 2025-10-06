@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ series.title_he }} - אנימה פלוס</title>
+    <!-- הוספה: קישור לאייקון (Favicon) כדי למנוע שגיאת 404 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/series.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -151,10 +153,8 @@
                      episodeKeys.forEach(episodeNum => {
                         const episode = season.episodes[episodeNum];
                         
-                        // --- התיקון כאן ---
                         // ודא שהפרק קיים ושיש לו קישור וידאו לפני שמוסיפים אותו לרשימה
                         if (!episode || !episode.video_url) return;
-                        // --------------------
 
                         const episodeElement = document.createElement('div');
                         episodeElement.className = 'episode-item';
