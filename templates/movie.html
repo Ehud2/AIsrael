@@ -4,11 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ movie.title_he }} - אנימה פלוס</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/series.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/movie.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #e2e8f0;
+        }
+        .user-profile a {
+            display: flex;
+            align-items: center;
+        }
+    </style>
 </head>
 <body>
     <header class="header">
@@ -23,7 +38,7 @@
                 <nav class="nav">
                     <a href="/" class="nav-link">הכל</a>
                     <a href="/shows" class="nav-link">סדרות</a>
-                    <a href="/movies" class="nav-link">סרטים</a>
+                    <a href="/movies" class="nav-link active">סרטים</a>
                     {% if user and user.email == 'ehudverbin@gmail.com' %}
                         <a href="/manage" class="nav-link">ניהול</a>
                     {% endif %}
@@ -45,72 +60,84 @@
         </div>
     </header>
 
-    <main class="movie-player-page">
-        <div class="container">
-            <div class="video-container">
-                {% if movie.video_url %}
-                    <video controls autoplay>
-                        <source src="{{ movie.video_url }}" type="video/mp4">
-                        הדפדפן שלך לא תומך בנגן הווידאו.
-                    </video>
-                {% else %}
-                    <div class="no-video">
-                        <p>לא נמצא קישור וידאו עבור סרט זה.</p>
+    <main class="main-content">
+        <div class="container series-page-container">
+            <div class="series-content-wrapper">
+                <div class="video-player-section">
+                    <div id="videoPlayerContainer" class="video-player-container">
+                        {% if movie.video_url %}
+                            <iframe id="videoPlayer" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        {% else %}
+                            <div class="no-video-placeholder">
+                                <p>לא נמצא קישור וידאו עבור סרט זה.</p>
+                            </div>
+                        {% endif %}
                     </div>
-                {% endif %}
-            </div>
+                    <div class="series-details-content">
+                        <h1 class="series-title">{{ movie.title_he }}</h1>
+                        <div class="series-meta">
+                            <span>⭐ {{ movie.rating }}/10</span>
+                            <span> | </span>
+                            <span>{{ movie.year }}</span>
+                            <span> | </span>
+                            <span>{{ movie.duration }} דקות</span>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="movie-details">
-                <h1 class="movie-title">{{ movie.title_he }}</h1>
-                <h2 class="movie-subtitle">{{ movie.title }}</h2>
-                <div class="movie-meta">
-                    <span>⭐ {{ movie.rating }}/10</span>
-                    <span>|</span>
-                    <span>{{ movie.year }}</span>
-                    <span>|</span>
-                    <span>{{ movie.duration }} דקות</span>
-                </div>
-                <div class="movie-genres">
-                    {% for genre in movie.genre %}
-                        <span class="genre-tag">{{ genre }}</span>
-                    {% endfor %}
-                </div>
-                <div class="movie-description">
-                    <h3>תקציר</h3>
-                    <p>{{ movie.description }}</p>
+                <div class="episodes-panel">
+                    <div class="panel-header">
+                        <h3>פרטי הסרט</h3>
+                    </div>
+                    <div class="movie-info-panel">
+                        <h4 class="info-title">ז'אנרים</h4>
+                        <div class="genres-list">
+                            {% for genre in movie.genre %}
+                                <span class="genre-tag">{{ genre }}</span>
+                            {% endfor %}
+                        </div>
+                        <h4 class="info-title">תקציר</h4>
+                        <p class="movie-description">{{ movie.description }}</p>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
+    
+    <script>
+        const movieData = {{ movie | tojson }};
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>אנימה פלוס</h3>
-                    <p>הפלטפורמה המובילה לצפייה באנימה בישראל</p>
-                </div>
-                <div class="footer-section">
-                    <h4>קישורים מהירים</h4>
-                    <ul>
-                        <li><a href="#">אודות</a></li>
-                        <li><a href="#">יצירת קשר</a></li>
-                        <li><a href="#">תנאי שימוש</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>עקבו אחרינו</h4>
-                    <div class="social-links">
-                        <a href="#">📘</a>
-                        <a href="#">📷</a>
-                        <a href="#">🐦</a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 אנימה פלוס. כל הזכויות שמורות.</p>
-            </div>
-        </div>
-    </footer>
+        function getEmbedUrl(originalUrl) {
+            if (!originalUrl) return '';
+            
+            if (originalUrl.includes('drive.google.com')) {
+                // Handles both 'file/d/' and 'open?id=' URLs
+                let fileId;
+                if (originalUrl.includes('/d/')) {
+                    fileId = originalUrl.split('/d/')[1].split('/')[0];
+                } else if (originalUrl.includes('id=')) {
+                    fileId = new URL(originalUrl).searchParams.get('id');
+                } else {
+                    return originalUrl; // Fallback
+                }
+                return `https://drive.google.com/file/d/${fileId}/preview`;
+            }
+            if (originalUrl.includes('mega.nz')) {
+                const parts = originalUrl.split('/');
+                const fileIdWithKey = parts[parts.length - 1];
+                return `https://mega.nz/embed/${fileIdWithKey.replace('file/', '')}`;
+            }
+            // Fallback for direct links or other services
+            return originalUrl;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoPlayer = document.getElementById('videoPlayer');
+            if (videoPlayer && movieData.video_url) {
+                const embedUrl = getEmbedUrl(movieData.video_url);
+                videoPlayer.src = embedUrl;
+            }
+        });
+    </script>
 </body>
 </html>
