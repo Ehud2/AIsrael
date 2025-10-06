@@ -114,7 +114,6 @@ button:hover { background-color: #018786; }
 .existing-item-actions .rename-content-btn { background-color: #2196F3; color: white; }
 .existing-item-actions .rename-content-btn:hover { background-color: #1976D2; }
 
-
 .category-list { list-style: none; padding: 0; max-height: 200px; overflow-y: auto; }
 .category-item { display: flex; justify-content: space-between; align-items: center; background-color: #333; padding: 0.5rem 1rem; border-radius: 4px; margin-bottom: 0.5rem; }
 .cat-actions { display: flex; gap: 0.5rem; }
@@ -133,3 +132,15 @@ button:hover { background-color: #018786; }
 .status-message.success { background-color: #03dac6; }
 .status-message.error { background-color: #cf6679; color: #fff; }
 .status-message.info { background-color: #f2f2f2; }
+
+.episode-row { display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1rem; padding: 1rem; background: #333; border-radius: 6px; border: 2px solid transparent; transition: border-color 0.3s; }
+.episode-row .form-group { margin-bottom: 0; }
+.episode-row .row-item { flex-shrink: 0; }
+.episode-row .row-item.wide { flex-grow: 1; }
+.episode-row .row-actions { display: flex; gap: 0.5rem; }
+.add-row-btn, .remove-row-btn {
+    padding: 0; width: 30px; height: 30px; line-height: 30px; text-align: center;
+    font-size: 1.2rem; font-weight: bold; border-radius: 50%;
+}
+.add-row-btn { background-color: #4CAF50; color: white; }
+.remove-row-btn { background-color: #cf6679; color: white; }
