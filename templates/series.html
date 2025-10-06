@@ -1,206 +1,185 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ series.title_he }} - אנימה פלוס</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/series.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        .profile-pic {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid #e2e8f0;
-        }
-        .user-profile a {
-            display: flex;
-            align-items: center;
-        }
-    </style>
-</head>
-<body>
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <a href="/" style="text-decoration: none; color: inherit;">
-                        <span class="logo-icon">🌸</span>
-                        <span class="logo-text">אנימה<span class="logo-plus">פלוס</span></span>
-                    </a>
-                </div>
-                <nav class="nav">
-                    <a href="/" class="nav-link">הכל</a>
-                    <a href="/shows" class="nav-link active">סדרות</a>
-                    <a href="/movies" class="nav-link">סרטים</a>
-                     {% if user and user.email == 'ehudverbin@gmail.com' %}
-                        <a href="/manage" class="nav-link">ניהול</a>
-                    {% endif %}
-                </nav>
-                <div class="header-actions">
-                     <div class="user-profile">
-                        {% if user %}
-                            <a href="{{ url_for('logout') }}" title="התנתקות">
-                                <img src="{{ user.picture }}" alt="{{ user.name }}" class="profile-pic">
-                            </a>
-                        {% else %}
-                            <a href="{{ url_for('login') }}">
-                                <button class="user-btn">👤</button>
-                            </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
+.series-page-container {
+    padding-top: 30px;
+    padding-bottom: 50px;
+}
 
-    <main class="main-content">
-        <div class="container series-page-container">
-            <div class="series-content-wrapper">
-                <div class="video-player-section">
-                    <div id="videoPlayerContainer" class="video-player-container">
-                        <iframe id="videoPlayer" src="" frameborder="0" allowfullscreen></iframe>
-                    </div>
-                    <div class="series-details-content">
-                        <h1 class="series-title">{{ series.title_he }}</h1>
-                        <div class="series-meta">
-                            <span>⭐ {{ series.rating }}/10</span>
-                            <span> | </span>
-                            <span>{{ series.year }}</span>
-                            <span> | </span>
-                            <span>{{ series.genre | join(', ') }}</span>
-                        </div>
-                        <p class="series-description">{{ series.description }}</p>
-                    </div>
-                </div>
+.series-content-wrapper {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 30px;
+    align-items: flex-start;
+}
 
-                <div class="episodes-panel">
-                    <div class="panel-header">
-                        <h3>פרקים</h3>
-                    </div>
-                    <div id="seasonsAccordion" class="seasons-accordion">
-                        
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-    
-    <script>
-        const seriesData = {{ series | tojson }};
-        const accordionContainer = document.getElementById('seasonsAccordion');
-        const videoPlayer = document.getElementById('videoPlayer');
+@media (max-width: 992px) {
+    .series-content-wrapper {
+        grid-template-columns: 1fr;
+    }
+}
 
-        function getEmbedUrl(originalUrl) {
-            if (!originalUrl) return '';
-            
-            if (originalUrl.includes('drive.google.com')) {
-                const fileId = originalUrl.split('/d/')[1].split('/')[0];
-                return `https://drive.google.com/file/d/${fileId}/preview`;
-            }
-            if (originalUrl.includes('mega.nz')) {
-                const parts = originalUrl.split('/');
-                const fileIdWithKey = parts[parts.length - 1];
-                return `https://mega.nz/embed/${fileIdWithKey.replace('file/', '')}`;
-            }
-            return originalUrl;
-        }
+.video-player-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
 
-        function playEpisode(seasonNum, episodeNum, videoUrl) {
-            const embedUrl = getEmbedUrl(videoUrl);
-            if (videoPlayer.src !== embedUrl) {
-                videoPlayer.src = embedUrl;
-            }
+.video-player-container {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    background-color: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
 
-            document.querySelectorAll('.episode-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            const activeEpisodeElement = document.querySelector(`.episode-item[data-season='${seasonNum}'][data-episode='${episodeNum}']`);
-            if (activeEpisodeElement) {
-                activeEpisodeElement.classList.add('active');
-            }
-        }
+.video-player-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
 
-        function renderAccordion() {
-            if (!seriesData.seasons || Object.keys(seriesData.seasons).length === 0) {
-                accordionContainer.innerHTML = '<p class="no-content-message">לא נמצאו עונות לסדרה זו.</p>';
-                return;
-            }
+.series-details-content {
+    background-color: var(--card-bg);
+    padding: 25px;
+    border-radius: 12px;
+}
 
-            const seasonKeys = Object.keys(seriesData.seasons);
-            seasonKeys.forEach(seasonNum => {
-                const season = seriesData.seasons[seasonNum];
+.series-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--text-light);
+}
 
-                // --- התיקון כאן ---
-                // אם העונה היא null, דלג עליה והמשך ללולאה הבאה
-                if (!season) return;
-                // --------------------
+.series-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
 
-                const seasonItem = document.createElement('div');
-                seasonItem.className = 'season-item';
-                
-                const seasonHeader = document.createElement('button');
-                seasonHeader.className = 'season-header';
-                seasonHeader.innerHTML = `<span>עונה ${seasonNum}</span> <span class="arrow-icon"></span>`;
+.series-description {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-normal);
+}
 
-                const episodesList = document.createElement('div');
-                episodesList.className = 'episodes-list';
+.episodes-panel {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    height: calc(100vh - 150px);
+    display: flex;
+    flex-direction: column;
+}
 
-                if (season.episodes && Object.keys(season.episodes).length > 0) {
-                    const episodeKeys = Object.keys(season.episodes);
-                     episodeKeys.forEach(episodeNum => {
-                        const episode = season.episodes[episodeNum];
-                        const episodeElement = document.createElement('div');
-                        episodeElement.className = 'episode-item';
-                        episodeElement.textContent = `פרק ${episodeNum}`;
-                        episodeElement.dataset.season = seasonNum;
-                        episodeElement.dataset.episode = episodeNum;
-                        episodeElement.onclick = (e) => {
-                            e.stopPropagation();
-                            playEpisode(seasonNum, episodeNum, episode.video_url);
-                        };
-                        episodesList.appendChild(episodeElement);
-                    });
-                } else {
-                    episodesList.innerHTML = '<p class="no-content-message">לא נמצאו פרקים לעונה זו.</p>';
-                }
+.panel-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--background-dark);
+}
 
-                seasonHeader.onclick = () => {
-                    const isActive = seasonItem.classList.contains('active');
-                    document.querySelectorAll('.season-item').forEach(item => item.classList.remove('active'));
-                    if (!isActive) {
-                        seasonItem.classList.add('active');
-                    }
-                };
+.panel-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text-light);
+}
 
-                seasonItem.appendChild(seasonHeader);
-                seasonItem.appendChild(episodesList);
-                accordionContainer.appendChild(seasonItem);
-            });
-        }
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            renderAccordion();
-            
-            const firstSeasonItem = document.querySelector('.season-item');
-            if (firstSeasonItem) {
-                firstSeasonItem.classList.add('active');
-                const firstEpisodeItem = firstSeasonItem.querySelector('.episode-item');
-                if (firstEpisodeItem) {
-                    firstEpisodeItem.click();
-                } else {
-                    videoPlayer.style.display = 'none';
-                    document.getElementById('videoPlayerContainer').innerHTML = '<p class="no-content-message">לא נמצא פרק להתחלת הצפייה.</p>';
-                }
-            } else {
-                videoPlayer.style.display = 'none';
-                 document.getElementById('videoPlayerContainer').innerHTML = '<p class="no-content-message">לא נמצא תוכן לצפייה.</p>';
-            }
-        });
-    </script>
-</body>
-</html>
+.seasons-accordion {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding: 10px;
+    background-color: rgba(0,0,0,0.1); /* רקע כהה יותר לאזור התוכן */
+}
+
+.season-item {
+    margin-bottom: 5px;
+}
+
+.season-header {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--background-dark);
+    border: none;
+    border-radius: 8px;
+    color: var(--text-light);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.season-header:hover {
+    background-color: #3f4457;
+}
+
+.season-header .arrow-icon {
+    border: solid var(--text-muted);
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 3px;
+    transform: rotate(45deg);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.season-item.active > .season-header .arrow-icon {
+    transform: rotate(-135deg);
+    border-color: var(--primary-color);
+}
+
+.season-item.active > .season-header {
+    color: var(--primary-color);
+}
+
+.episodes-list {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+    padding: 0 10px;
+}
+
+.season-item.active .episodes-list {
+    max-height: 1000px; /* A large value to allow content to expand */
+    padding: 10px;
+}
+
+.episode-item {
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background-color: var(--card-bg-light);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    color: var(--text-normal);
+    font-weight: 500;
+    border-right: 3px solid transparent;
+}
+
+.episode-item:hover {
+    background-color: #3f4457;
+    border-right-color: var(--text-muted);
+}
+
+.episode-item.active {
+    background-color: rgba(var(--primary-color-rgb), 0.2);
+    color: var(--primary-color);
+    font-weight: 700; /* טקסט מודגש יותר */
+    border-right-color: var(--primary-color);
+    transform: scale(1.02); /* אפקט קפיצה קטן */
+    box-shadow: 0 0 15px rgba(var(--primary-color-rgb), 0.5); /* זוהר בולט */
+}
+
+.no-content-message {
+    padding: 15px;
+    color: var(--text-muted);
+    text-align: center;
+}
