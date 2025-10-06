@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>אנימה פלוס - סדרות וסרטי אנימה</title>
-    <!-- הוספה: קישור לאייקון (Favicon) כדי למנוע שגיאת 404 -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -370,10 +369,11 @@
                         </div>
                     </div>
                     <div class="modal-details">
+                        <!-- שינוי: הסרת כפתור מועדפים -->
                         <div class="modal-actions">
                             <button class="btn-primary" onclick="${watchAction}">▶ התחל לצפות</button>
-                            <button class="btn-secondary">➕ הוסף למועדפים</button>
                         </div>
+                        <!-- סוף שינוי -->
                         <div class="modal-info">
                             <div class="info-row">
                                 <span class="info-label">דירוג:</span>
