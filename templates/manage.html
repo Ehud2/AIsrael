@@ -352,7 +352,7 @@
                     <div class="existing-item-info">
                         <h4>${item.title_he}</h4>
                         <span>${item.type === 'series' ? 'סדרה' : 'סרט'} | ${item.year}</span>
-                        <p class="category-tags">קטגוריות: ${item.categoryNames.join(', ') || 'אין'}</p>
+                        <p class="category-tags">קטגוריות: ${(item.categoryNames || []).join(', ') || 'אין'}</p>
                     </div>
                     <div class="existing-item-actions">
                         <button class="edit-btn" data-id="${item.id}">ערוך קטגוריות</button>
