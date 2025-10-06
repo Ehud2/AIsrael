@@ -135,6 +135,11 @@
             seasonKeys.forEach(seasonNum => {
                 const season = seriesData.seasons[seasonNum];
 
+                // --- התיקון כאן ---
+                // אם העונה היא null, דלג עליה והמשך ללולאה הבאה
+                if (!season) return;
+                // --------------------
+
                 const seasonItem = document.createElement('div');
                 seasonItem.className = 'season-item';
                 
