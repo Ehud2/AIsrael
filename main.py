@@ -82,11 +82,8 @@ def login():
 @app.route('/authorize/google')
 def authorize():
     token = oauth.google.authorize_access_token()
-    # המידע על המשתמש כבר פוענח ונמצא במילון ה-token תחת המפתח 'userinfo'
-    # authlib עשתה את כל האימותים (כולל בדיקת ה-nonce) עבורך.
     user_info = token.get('userinfo')
     
-    # בדיקה למקרה שהמידע לא הגיע (לא סביר עם גוגל, אבל נוהג טוב)
     if not user_info:
         return "Could not fetch user info from Google.", 400
         
@@ -297,6 +294,31 @@ def update_json_cache():
         return jsonify({'success': True, 'message': 'קובץ המידע עודכן בהצלחה מה-Database'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/series/<series_id>')
+def series_page(series_id):
+    ref = db.reference(f'anime/{series_id}')
+    series_data = ref.get()
+    
+    if not series_data or series_data.get('type') != 'series':
+        return redirect(url_for('index'))
+
+    if 'seasons' in series_data and isinstance(series_data['seasons'], dict):
+        sorted_seasons = {}
+        sorted_season_keys = sorted(series_data['seasons'].keys(), key=int)
+        
+        for season_key in sorted_season_keys:
+            season = series_data['seasons'][season_key]
+            if 'episodes' in season and isinstance(season['episodes'], dict):
+                sorted_episodes = {}
+                sorted_episode_keys = sorted(season['episodes'].keys(), key=int)
+                for episode_key in sorted_episode_keys:
+                    sorted_episodes[episode_key] = season['episodes'][episode_key]
+                season['episodes'] = sorted_episodes
+            sorted_seasons[season_key] = season
+        series_data['seasons'] = sorted_seasons
+
+    return render_template('series.html', series=series_data, user=session.get('user'))
 
 
 if __name__ == '__main__':
