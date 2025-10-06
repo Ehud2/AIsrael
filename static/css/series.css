@@ -94,6 +94,7 @@
     overflow-y: auto;
     flex-grow: 1;
     padding: 10px;
+    background-color: rgba(0,0,0,0.1); /* רקע כהה יותר לאזור התוכן */
 }
 
 .season-item {
@@ -169,10 +170,12 @@
 }
 
 .episode-item.active {
-    background-color: rgba(var(--primary-color-rgb), 0.15);
+    background-color: rgba(var(--primary-color-rgb), 0.2);
     color: var(--primary-color);
-    font-weight: 600;
+    font-weight: 700; /* טקסט מודגש יותר */
     border-right-color: var(--primary-color);
+    transform: scale(1.02); /* אפקט קפיצה קטן */
+    box-shadow: 0 0 15px rgba(var(--primary-color-rgb), 0.5); /* זוהר בולט */
 }
 
 .no-content-message {
