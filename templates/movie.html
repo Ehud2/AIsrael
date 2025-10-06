@@ -62,14 +62,7 @@
     <main class="main-content">
         <div class="container movie-page-container">
             <div id="videoPlayerContainer" class="video-player-container">
-                {% if movie.video_url %}
-                    <iframe id="videoPlayer" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                {% else %}
-                    <div class="no-video-message">
-                        <h3>אופס!</h3>
-                        <p>לא נמצא קישור וידאו לסרט זה.</p>
-                    </div>
-                {% endif %}
+                <iframe id="videoPlayer" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
             <div class="movie-details-content">
                 <h1 class="movie-title">{{ movie.title_he }}</h1>
@@ -108,17 +101,15 @@
                 }
             }
             if (originalUrl.includes('mega.nz')) {
-                const fileIdMatch = originalUrl.match(/#([a-zA-Z0-9!_-]+)/);
-                 if (fileIdMatch && fileIdMatch[1]) {
-                    const fileIdWithKey = originalUrl.split('/').pop();
-                    return `https://mega.nz/embed/${fileIdWithKey.replace('file/', '')}`;
-                }
+                const parts = originalUrl.split('/');
+                const fileIdWithKey = parts[parts.length - 1];
+                return `https://mega.nz/embed/${fileIdWithKey.replace('file/', '')}`;
             }
             return originalUrl;
         }
         
         document.addEventListener('DOMContentLoaded', () => {
-            if (movieData.video_url) {
+            if (movieData && movieData.video_url) {
                 const videoPlayer = document.getElementById('videoPlayer');
                 videoPlayer.src = getEmbedUrl(movieData.video_url);
             }
