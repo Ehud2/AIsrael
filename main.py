@@ -63,16 +63,16 @@ def update_data_json_from_db():
     all_anime_dict = anime_ref.get() or {}
 
     all_anime_list = []
-    for key, value in all_anime_dict.items():
-        value['id'] = key
-        category_id = value.get('categoryId')
-        value['categoryName'] = category_map.get(category_id, 'ללא קטגוריה')
-        all_anime_list.append(value)
+    if all_anime_dict:
+        for key, value in all_anime_dict.items():
+            value['id'] = key
+            category_id = value.get('categoryId')
+            value['categoryName'] = category_map.get(category_id, 'ללא קטגוריה')
+            all_anime_list.append(value)
     
     with open(DATA_JSON_PATH, 'w', encoding='utf-8') as f:
         json.dump(all_anime_list, f, ensure_ascii=False, indent=2)
     print("data.json has been updated successfully with category information.")
-
 
 @app.route('/login')
 def login():
@@ -95,7 +95,6 @@ def logout():
     session.pop('user', None)
     return redirect('/')
 
-
 @app.route('/')
 def index():
     return render_template('index.html', user=session.get('user'))
@@ -113,7 +112,6 @@ def movies_page():
 @app.route('/shows')
 def shows_page():
     return render_template('shows.html', user=session.get('user'))
-
 
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
@@ -137,7 +135,6 @@ def add_category():
         return jsonify({'success': True, 'message': f'קטגוריה "{category_name}" נוצרה בהצלחה!'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/api/anime')
 def get_anime():
@@ -171,6 +168,38 @@ def get_anime():
         filtered = [a for a in filtered if a.get('genre') and genre in a['genre']]
     
     return jsonify(filtered)
+
+@app.route('/api/existing_series', methods=['GET'])
+def get_existing_series():
+    try:
+        ref = db.reference('anime')
+        all_content = ref.get()
+        if not all_content:
+            return jsonify([])
+        
+        series_list = [
+            {'id': key, 'title_he': value.get('title_he', 'ללא שם')}
+            for key, value in all_content.items() if value.get('type') == 'series'
+        ]
+        sorted_series = sorted(series_list, key=lambda x: x['title_he'])
+        return jsonify(sorted_series)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/delete_content', methods=['POST'])
+def delete_content():
+    data = request.json
+    content_id = data.get('content_id')
+    if not content_id:
+        return jsonify({'error': 'Content ID is required'}), 400
+    
+    try:
+        ref = db.reference(f'anime/{content_id}')
+        ref.delete()
+        update_data_json_from_db()
+        return jsonify({'success': True, 'message': 'התוכן נמחק בהצלחה'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/anime/<anime_id>')
 def get_anime_details(anime_id):
@@ -236,7 +265,6 @@ def add_content():
             ref.set({'video_url': video_url})
             return jsonify({'success': True, 'message': f'פרק {episode_num} נוסף לעונה {season_num}'})
 
-        # Logic for adding Series or Movie
         tmdb_id = str(data.get('tmdb_id'))
         category_id = data.get('category_id')
 
@@ -305,7 +333,6 @@ def add_content():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
 @app.route('/api/update_json_cache', methods=['POST'])
 def update_json_cache():
     try:
@@ -348,7 +375,6 @@ def movie_page(movie_id):
         return redirect(url_for('index'))
     
     return render_template('movie.html', movie=movie_data, user=session.get('user'))
-
 
 if __name__ == '__main__':
     if not os.path.exists(DATA_JSON_PATH):
