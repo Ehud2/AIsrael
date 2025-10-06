@@ -282,4 +282,56 @@ def add_content():
             ref.update(common_data)
             
             update_data_json_from_db()
-            return jsonify({'success': True, 'message': f'"{common_data["title_he"]}" נוסף בהצלחה!
+            return jsonify({'success': True, 'message': f'"{common_data["title_he"]}" נוסף בהצלחה!'})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/update_json_cache', methods=['POST'])
+def update_json_cache():
+    try:
+        update_data_json_from_db()
+        return jsonify({'success': True, 'message': 'קובץ המידע עודכן בהצלחה מה-Database'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/series/<series_id>')
+def series_page(series_id):
+    ref = db.reference(f'anime/{series_id}')
+    series_data = ref.get()
+    
+    if not series_data or series_data.get('type') != 'series':
+        return redirect(url_for('index'))
+
+    if 'seasons' in series_data and isinstance(series_data['seasons'], dict):
+        sorted_seasons = {}
+        sorted_season_keys = sorted(series_data['seasons'].keys(), key=int)
+        
+        for season_key in sorted_season_keys:
+            season = series_data['seasons'][season_key]
+            if 'episodes' in season and isinstance(season['episodes'], dict):
+                sorted_episodes = {}
+                sorted_episode_keys = sorted(season['episodes'].keys(), key=int)
+                for episode_key in sorted_episode_keys:
+                    sorted_episodes[episode_key] = season['episodes'][episode_key]
+                season['episodes'] = sorted_episodes
+            sorted_seasons[season_key] = season
+        series_data['seasons'] = sorted_seasons
+
+    return render_template('series.html', series=series_data, user=session.get('user'))
+
+@app.route('/movie/<movie_id>')
+def movie_page(movie_id):
+    ref = db.reference(f'anime/{movie_id}')
+    movie_data = ref.get()
+
+    if not movie_data or movie_data.get('type') != 'movie':
+        return redirect(url_for('index'))
+    
+    return render_template('movie.html', movie=movie_data, user=session.get('user'))
+
+
+if __name__ == '__main__':
+    if not os.path.exists(DATA_JSON_PATH):
+        update_data_json_from_db()
+    app.run(debug=True, host='0.0.0.0', port=5000)
