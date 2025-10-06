@@ -182,8 +182,8 @@
                     li.innerHTML = `
                         <span>${cat.name}</span>
                         <div class="cat-actions">
-                            <button class="rename-btn" data-id="${cat.id}" data-name="${cat.name}">שנה שם</button>
-                            <button class="delete-btn small" data-id="${cat.id}">מחק</button>
+                            <button class="rename-cat-btn" data-id="${cat.id}" data-name="${cat.name}">שנה שם</button>
+                            <button class="delete-cat-btn small" data-id="${cat.id}">מחק</button>
                         </div>
                     `;
                     categoryList.appendChild(li);
@@ -333,10 +333,12 @@
             const filterType = document.querySelector('input[name="filterType"]:checked').value;
             
             const filteredContent = allExistingContent.filter(item => {
-                const matchesSearch = item.title_he.toLowerCase().includes(searchTerm) || item.title.toLowerCase().includes(searchTerm);
+                const titleHe = item.title_he || '';
+                const title = item.title || '';
+                const matchesSearch = titleHe.toLowerCase().includes(searchTerm) || title.toLowerCase().includes(searchTerm);
                 const matchesType = filterType === 'all' || item.type === filterType;
                 return matchesSearch && matchesType;
-            });
+            }).sort((a,b) => (a.title_he || '').localeCompare(b.title_he || ''));
 
             existingContentList.innerHTML = '';
             if (filteredContent.length === 0) {
@@ -355,8 +357,9 @@
                         <p class="category-tags">קטגוריות: ${(item.categoryNames || []).join(', ') || 'אין'}</p>
                     </div>
                     <div class="existing-item-actions">
-                        <button class="edit-btn" data-id="${item.id}">ערוך קטגוריות</button>
-                        <button class="delete-btn" data-id="${item.id}">מחק</button>
+                        <button class="rename-content-btn" data-id="${item.id}" data-name="${item.title_he}">שנה שם</button>
+                        <button class="edit-cat-btn" data-id="${item.id}">ערוך קטגוריות</button>
+                        <button class="delete-content-btn" data-id="${item.id}">מחק</button>
                     </div>
                 `;
                 existingContentList.appendChild(itemDiv);
@@ -456,19 +459,39 @@
 
             existingContentSearch.addEventListener('input', renderExistingContent);
             document.querySelectorAll('input[name="filterType"]').forEach(radio => radio.addEventListener('change', renderExistingContent));
-            existingContentList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('delete-btn')) {
-                    handleDeleteContent(e.target.dataset.id);
+            
+            existingContentList.addEventListener('click', async (e) => {
+                const target = e.target;
+                const contentId = target.dataset.id;
+
+                if (target.classList.contains('delete-content-btn')) {
+                    handleDeleteContent(contentId);
                 }
-                if (e.target.classList.contains('edit-btn')) {
-                    openEditModal(e.target.dataset.id);
+                if (target.classList.contains('edit-cat-btn')) {
+                    openEditModal(contentId);
+                }
+                if (target.classList.contains('rename-content-btn')) {
+                    const currentName = target.dataset.name;
+                    const newName = prompt('הזן שם חדש (עברית):', currentName);
+                    if (newName && newName.trim() !== '' && newName !== currentName) {
+                        const response = await fetch(`/api/content/${contentId}/rename`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ new_title_he: newName.trim() })
+                        });
+                        const result = await response.json();
+                        showStatus(result.message || result.error, response.ok ? 'success' : 'error');
+                        if (response.ok) {
+                            loadExistingContent();
+                        }
+                    }
                 }
             });
 
             categoryList.addEventListener('click', async (e) => {
                 const target = e.target;
                 const id = target.dataset.id;
-                if (target.classList.contains('delete-btn')) {
+                if (target.classList.contains('delete-cat-btn')) {
                     if (!confirm('האם אתה בטוח שברצונך למחוק קטגוריה זו? הפעולה תסיר את הקטגוריה מכל הסרטים/סדרות המשויכים אליה.')) return;
                     const response = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
                     const result = await response.json();
@@ -478,7 +501,7 @@
                         loadExistingContent();
                     }
                 }
-                if (target.classList.contains('rename-btn')) {
+                if (target.classList.contains('rename-cat-btn')) {
                     const currentName = target.dataset.name;
                     const newName = prompt('הזן שם חדש לקטגוריה:', currentName);
                     if (newName && newName.trim() !== '' && newName !== currentName) {
