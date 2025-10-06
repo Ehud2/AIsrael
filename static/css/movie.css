@@ -1,109 +1,58 @@
-body {
-    background-color: #0f172a;
-    color: #e2e8f0;
-}
+/* This file reuses classes from series.css for a consistent look. */
+/* It adds specific styles for the movie info panel. */
 
-.movie-player-page .container {
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 0 20px;
-}
-
-.video-container {
+.no-video-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    margin-bottom: 30px;
-    background-color: #000;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-}
-
-.video-container video {
-    width: 100%;
-    height: auto;
-    display: block;
-}
-
-.no-video {
-    width: 100%;
-    aspect-ratio: 16 / 9;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #1e293b;
-    color: #94a3b8;
-    font-size: 1.2rem;
+    background-color: #000;
+    color: var(--text-muted);
+    font-size: 1.1rem;
 }
 
-.movie-details {
+.movie-info-panel {
     padding: 20px;
-    background-color: #1e293b;
-    border-radius: 12px;
+    overflow-y: auto;
+    flex-grow: 1;
+    color: var(--text-normal);
 }
 
-.movie-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: #fff;
-    margin-bottom: 5px;
+.info-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
 }
 
-.movie-subtitle {
-    font-size: 1.2rem;
-    font-weight: 400;
-    color: #94a3b8;
-    margin-bottom: 20px;
+.info-title:not(:first-child) {
+    margin-top: 25px;
 }
 
-.movie-meta {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    font-size: 1rem;
-    color: #cbd5e1;
-    margin-bottom: 20px;
-}
-
-.movie-meta span {
-    display: flex;
-    align-items: center;
-}
-
-.movie-genres {
+.genres-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 30px;
+    gap: 8px;
+    margin-bottom: 15px;
 }
 
 .genre-tag {
-    background-color: #334155;
-    color: #e2e8f0;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 500;
+    background-color: var(--card-bg-light);
+    color: var(--text-normal);
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
 }
 
-.movie-description h3 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 10px;
-    border-bottom: 2px solid #334155;
-    padding-bottom: 8px;
-}
-
-.movie-description p {
-    font-size: 1rem;
-    line-height: 1.8;
-    color: #cbd5e1;
-}
-
-.profile-pic {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #e2e8f0;
+.movie-description {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-muted);
 }
