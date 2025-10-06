@@ -350,6 +350,15 @@
 
                 if (!anime) throw new Error('Anime not found');
                 
+                let watchAction;
+                if (anime.type === 'series') {
+                    watchAction = `window.location.href='/series/${anime.id}'`;
+                } else if (anime.video_url) {
+                    watchAction = `window.open('${anime.video_url}', '_blank')`;
+                } else {
+                    watchAction = `alert('לא נמצא קישור לסרט זה.')`;
+                }
+                
                 modalBody.innerHTML = `
                     <div class="modal-hero">
                         <img src="${anime.banner || anime.image}" alt="${anime.title_he}">
@@ -360,7 +369,7 @@
                     </div>
                     <div class="modal-details">
                         <div class="modal-actions">
-                            <button class="btn-primary">▶ התחל לצפות</button>
+                            <button class="btn-primary" onclick="${watchAction}">▶ התחל לצפות</button>
                             <button class="btn-secondary">➕ הוסף למועדפים</button>
                         </div>
                         <div class="modal-info">
