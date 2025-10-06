@@ -133,14 +133,46 @@ button:hover { background-color: #018786; }
 .status-message.error { background-color: #cf6679; color: #fff; }
 .status-message.info { background-color: #f2f2f2; }
 
-.episode-row { display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1rem; padding: 1rem; background: #333; border-radius: 6px; border: 2px solid transparent; transition: border-color 0.3s; }
-.episode-row .form-group { margin-bottom: 0; }
-.episode-row .row-item { flex-shrink: 0; }
-.episode-row .row-item.wide { flex-grow: 1; }
-.episode-row .row-actions { display: flex; gap: 0.5rem; }
-.add-row-btn, .remove-row-btn {
-    padding: 0; width: 30px; height: 30px; line-height: 30px; text-align: center;
-    font-size: 1.2rem; font-weight: bold; border-radius: 50%;
+.episode-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #333;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    transition: border-color 0.3s;
 }
-.add-row-btn { background-color: #4CAF50; color: white; }
-.remove-row-btn { background-color: #cf6679; color: white; }
+.episode-row .form-group {
+    margin-bottom: 0;
+}
+.episode-row .form-group.episode-number-group {
+    flex: 0 0 80px;
+}
+.episode-row .form-group.episode-url-group {
+    flex: 1 1 auto;
+}
+.episode-row .row-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+.add-row-btn, .remove-row-btn {
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 50%;
+}
+.add-row-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+.remove-row-btn {
+    background-color: #cf6679;
+    color: white;
+}
