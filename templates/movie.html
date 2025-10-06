@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ movie.title_he }} - אנימה פלוס</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/movie.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #e2e8f0;
+        }
+        .user-profile a {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="/" style="text-decoration: none; color: inherit;">
+                        <span class="logo-icon">🌸</span>
+                        <span class="logo-text">אנימה<span class="logo-plus">פלוס</span></span>
+                    </a>
+                </div>
+                <nav class="nav">
+                    <a href="/" class="nav-link">הכל</a>
+                    <a href="/shows" class="nav-link">סדרות</a>
+                    <a href="/movies" class="nav-link active">סרטים</a>
+                     {% if user and user.email == 'ehudverbin@gmail.com' %}
+                        <a href="/manage" class="nav-link">ניהול</a>
+                    {% endif %}
+                </nav>
+                <div class="header-actions">
+                     <div class="user-profile">
+                        {% if user %}
+                            <a href="{{ url_for('logout') }}" title="התנתקות">
+                                <img src="{{ user.picture }}" alt="{{ user.name }}" class="profile-pic">
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('login') }}">
+                                <button class="user-btn">👤</button>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container movie-page-container">
+            <div id="videoPlayerContainer" class="video-player-container">
+                {% if movie.video_url %}
+                    <iframe id="videoPlayer" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                {% else %}
+                    <div class="no-video-message">
+                        <h3>אופס!</h3>
+                        <p>לא נמצא קישור וידאו לסרט זה.</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="movie-details-content">
+                <h1 class="movie-title">{{ movie.title_he }}</h1>
+                <div class="movie-meta">
+                    <span>⭐ {{ movie.rating }}/10</span>
+                    <span> | </span>
+                    <span>{{ movie.year }}</span>
+                     <span> | </span>
+                    <span>{{ movie.duration }} דקות</span>
+                    <span> | </span>
+                    <span>{{ movie.genre | join(', ') }}</span>
+                </div>
+                <p class="movie-description">{{ movie.description }}</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+             <div class="footer-bottom">
+                <p>&copy; 2025 אנימה פלוס. כל הזכויות שמורות.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        const movieData = {{ movie | tojson }};
+
+        function getEmbedUrl(originalUrl) {
+            if (!originalUrl) return '';
+            
+            if (originalUrl.includes('drive.google.com')) {
+                const fileIdMatch = originalUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (fileIdMatch && fileIdMatch[1]) {
+                    return `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`;
+                }
+            }
+            if (originalUrl.includes('mega.nz')) {
+                const fileIdMatch = originalUrl.match(/#([a-zA-Z0-9!_-]+)/);
+                 if (fileIdMatch && fileIdMatch[1]) {
+                    const fileIdWithKey = originalUrl.split('/').pop();
+                    return `https://mega.nz/embed/${fileIdWithKey.replace('file/', '')}`;
+                }
+            }
+            return originalUrl;
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            if (movieData.video_url) {
+                const videoPlayer = document.getElementById('videoPlayer');
+                videoPlayer.src = getEmbedUrl(movieData.video_url);
+            }
+        });
+    </script>
+</body>
+</html>
