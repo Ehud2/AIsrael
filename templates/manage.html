@@ -309,10 +309,10 @@
                     };
                     try {
                         await sendAddRequest(payload, false);
-                        row.style.border = "2px solid #03dac6"; // Success indication
+                        row.style.border = "2px solid #03dac6";
                         showStatus(`פרק ${episodeNumInput.value} נוסף בהצלחה`, 'success');
                     } catch (e) {
-                         row.style.border = "2px solid #cf6679"; // Error indication
+                         row.style.border = "2px solid #cf6679";
                          showStatus(`שגיאה בהוספת פרק ${episodeNumInput.value}: ${e.message}`, 'error');
                     }
                 }
@@ -321,9 +321,7 @@
         }
 
         async function sendAddRequest(payload, shouldReset = true) {
-            if (!shouldReset) {
-                // Don't show the global "processing" message for batch adds
-            } else {
+            if (shouldReset) {
                  showStatus('מעבד...', 'info');
             }
            
@@ -450,11 +448,11 @@
             const row = document.createElement('div');
             row.className = 'episode-row';
             row.innerHTML = `
-                <div class="form-group row-item">
+                <div class="form-group episode-number-group">
                     <label>פרק</label>
                     <input type="number" class="episode-number-input" min="1" value="${episodeNumber}">
                 </div>
-                <div class="form-group row-item wide">
+                <div class="form-group episode-url-group">
                     <label>קישור וידאו</label>
                     <input type="url" class="episode-url-input" placeholder="https://...">
                 </div>
