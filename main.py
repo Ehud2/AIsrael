@@ -203,6 +203,20 @@ def update_content_categories(content_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/content/<content_id>/rename', methods=['PUT'])
+def rename_content(content_id):
+    data = request.json
+    new_title = data.get('new_title_he')
+    if not new_title:
+        return jsonify({'error': 'שם חדש הוא שדה חובה'}), 400
+    try:
+        ref = db.reference(f'anime/{content_id}')
+        ref.update({'title_he': new_title})
+        update_data_json_from_db()
+        return jsonify({'success': True, 'message': 'שם התוכן עודכן בהצלחה'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/anime')
 def get_anime():
     try:
