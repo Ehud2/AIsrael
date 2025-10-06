@@ -325,9 +325,7 @@ def movie_page(movie_id):
     ref = db.reference(f'anime/{movie_id}')
     movie_data = ref.get()
 
-    # --- התיקון כאן ---
-    # בודק אם הסרט קיים, אם הוא באמת מסוג 'movie', ואם יש לו קישור וידאו
-    if not movie_data or movie_data.get('type') != 'movie' or not movie_data.get('video_url'):
+    if not movie_data or movie_data.get('type') != 'movie':
         return redirect(url_for('index'))
     
     return render_template('movie.html', movie=movie_data, user=session.get('user'))
