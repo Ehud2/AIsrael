@@ -105,19 +105,22 @@ button:hover { background-color: #018786; }
 .existing-item-info h4 { margin: 0 0 0.25rem; color: #fff; }
 .existing-item-info span { font-size: 0.85rem; color: #aaa; }
 .existing-item-info .category-tags { font-size: 0.8rem; color: #888; margin: 0.25rem 0 0; }
-.existing-item-actions { display: flex; gap: 0.5rem; }
-.existing-item-actions .delete-btn, .existing-item-actions .edit-btn { padding: 0.5rem 1rem; font-size: 0.9rem; }
-.existing-item-actions .delete-btn { background-color: #cf6679; color: white; }
-.existing-item-actions .delete-btn:hover { background-color: #b00020; }
-.existing-item-actions .edit-btn { background-color: #4CAF50; color: white; }
-.existing-item-actions .edit-btn:hover { background-color: #45a049; }
+.existing-item-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.existing-item-actions button { padding: 0.5rem 1rem; font-size: 0.9rem; }
+.existing-item-actions .delete-content-btn { background-color: #cf6679; color: white; }
+.existing-item-actions .delete-content-btn:hover { background-color: #b00020; }
+.existing-item-actions .edit-cat-btn { background-color: #4CAF50; color: white; }
+.existing-item-actions .edit-cat-btn:hover { background-color: #45a049; }
+.existing-item-actions .rename-content-btn { background-color: #2196F3; color: white; }
+.existing-item-actions .rename-content-btn:hover { background-color: #1976D2; }
+
 
 .category-list { list-style: none; padding: 0; max-height: 200px; overflow-y: auto; }
 .category-item { display: flex; justify-content: space-between; align-items: center; background-color: #333; padding: 0.5rem 1rem; border-radius: 4px; margin-bottom: 0.5rem; }
 .cat-actions { display: flex; gap: 0.5rem; }
 .cat-actions button { font-size: 0.8rem; padding: 0.3rem 0.6rem; }
-.cat-actions .rename-btn { background-color: #373737; color: #03dac6; }
-.cat-actions .delete-btn.small { background-color: #cf6679; color: #fff; }
+.cat-actions .rename-cat-btn { background-color: #373737; color: #03dac6; }
+.cat-actions .delete-cat-btn.small { background-color: #cf6679; color: #fff; }
 
 .modal { position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; }
 .modal-content { background-color: #2a2a2a; margin: auto; padding: 2rem; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: 12px; position: relative; }
