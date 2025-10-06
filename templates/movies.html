@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>כל הסרטים - אנימה פלוס</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/showall.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -253,6 +254,8 @@
 
                 if (!anime) throw new Error('Anime not found');
                 
+                let watchAction = `window.location.href='/movie/${anime.id}'`;
+
                 modalBody.innerHTML = `
                     <div class="modal-hero">
                         <img src="${anime.banner || anime.image}" alt="${anime.title_he}">
@@ -263,8 +266,7 @@
                     </div>
                     <div class="modal-details">
                         <div class="modal-actions">
-                            <button class="btn-primary">▶ התחל לצפות</button>
-                            <button class="btn-secondary">➕ הוסף למועדפים</button>
+                            <button class="btn-primary" onclick="${watchAction}">▶ התחל לצפות</button>
                         </div>
                         <div class="modal-info">
                             <div class="info-row">
@@ -276,8 +278,8 @@
                                 <span class="info-value">${anime.year}</span>
                             </div>
                             <div class="info-row">
-                                <span class="info-label">${anime.type === 'series' ? 'פרקים' : 'משך'}:</span>
-                                <span class="info-value">${anime.episodes || (anime.duration ? anime.duration + ' דקות' : 'לא ידוע')}</span>
+                                <span class="info-label">משך:</span>
+                                <span class="info-value">${anime.duration ? anime.duration + ' דקות' : 'לא ידוע'}</span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">ז'אנרים:</span>
