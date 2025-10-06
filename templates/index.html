@@ -354,10 +354,10 @@
                 let watchAction;
                 if (anime.type === 'series') {
                     watchAction = `window.location.href='/series/${anime.id}'`;
-                } else if (anime.video_url) {
-                    watchAction = `window.open('${anime.video_url}', '_blank')`;
+                } else if (anime.type === 'movie') {
+                    watchAction = `window.location.href='/movie/${anime.id}'`;
                 } else {
-                    watchAction = `alert('לא נמצא קישור לסרט זה.')`;
+                    watchAction = `alert('לא נמצא קישור לצפייה.')`;
                 }
                 
                 modalBody.innerHTML = `
@@ -369,11 +369,9 @@
                         </div>
                     </div>
                     <div class="modal-details">
-                        <!-- שינוי: הסרת כפתור מועדפים -->
                         <div class="modal-actions">
                             <button class="btn-primary" onclick="${watchAction}">▶ התחל לצפות</button>
                         </div>
-                        <!-- סוף שינוי -->
                         <div class="modal-info">
                             <div class="info-row">
                                 <span class="info-label">דירוג:</span>
