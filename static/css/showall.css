@@ -1,41 +1,25 @@
-/* General Body Styles (from style.css for consistency) */
-:root {
-    --primary-color: #e50914;
-    --dark-color: #141414;
-    --dark-gray: #1c1c1c;
-    --light-gray: #2e2e2e;
-    --text-color: #ffffff;
-    --text-muted: #a0a0a0;
-    --font-primary: 'Rubik', sans-serif;
-}
-
-body {
-    background-color: var(--dark-color);
-    color: var(--text-color);
-    font-family: var(--font-primary);
-    margin: 0;
-    line-height: 1.6;
-}
-
-.container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 2rem;
-}
-
 /* Page Header */
 .page-header {
-    background: var(--dark-gray);
+    background: var(--bg-light);
     padding: 3rem 0;
     text-align: center;
-    border-bottom: 2px solid var(--primary-color);
-    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2.5rem;
 }
 
 .page-header h1 {
-    font-size: 3rem;
+    font-size: 2.75rem;
+    margin: 0 0 0.5rem 0;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.page-header p {
+    font-size: 1.1rem;
+    color: var(--text-muted);
     margin: 0;
-    font-weight: 700;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 /* Filters Section */
@@ -44,11 +28,13 @@ body {
     flex-wrap: wrap;
     gap: 1.5rem;
     padding: 1.5rem;
-    background-color: var(--dark-gray);
-    border-radius: 8px;
-    margin-bottom: 2rem;
+    background-color: var(--bg-card);
+    border-radius: 12px;
+    margin-bottom: 2.5rem;
     justify-content: center;
     align-items: center;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
 }
 
 .filter-group {
@@ -60,22 +46,55 @@ body {
 .filter-label {
     font-weight: 500;
     color: var(--text-muted);
+    font-size: 0.9rem;
 }
 
 .filter-select {
-    background-color: var(--light-gray);
-    color: var(--text-color);
-    border: 1px solid #444;
-    border-radius: 5px;
-    padding: 0.5rem 1rem;
+    background-color: white;
+    color: var(--text-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
+    transition: all 0.2s ease-in-out;
 }
 
 .filter-select:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.search-group {
+    position: relative;
+    flex-grow: 1;
+    max-width: 400px;
+}
+
+.search-group .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.6rem 1rem 0.6rem 2.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: all 0.2s ease-in-out;
+}
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
 /* Content Grid Section */
@@ -83,139 +102,16 @@ body {
     padding-bottom: 3rem;
 }
 
-#contentGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1.5rem;
-}
+/* 
+The #contentGrid will now use the .anime-grid class from the main style.css
+This ensures consistency and reduces code duplication. 
+The same goes for the anime cards inside it.
+*/
 
-/* Message for no results */
 .grid-message {
-    grid-column: 1 / -1; /* Span all columns */
+    grid-column: 1 / -1;
     text-align: center;
     font-size: 1.2rem;
     color: var(--text-muted);
     padding: 4rem 0;
-}
-
-/* Loading Spinner */
-.loading {
-    display: none;
-    justify-content: center;
-    align-items: center;
-    padding: 4rem 0;
-    grid-column: 1 / -1;
-}
-
-.spinner {
-    border: 5px solid rgba(255, 255, 255, 0.2);
-    border-top: 5px solid var(--primary-color);
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Anime Card (copied from style.css for consistency) */
-.anime-card {
-    background-color: var(--dark-gray);
-    border-radius: 8px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    display: flex;
-    flex-direction: column;
-}
-
-.anime-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
-}
-
-.anime-image {
-    position: relative;
-    aspect-ratio: 2 / 3;
-}
-
-.anime-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.anime-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.anime-card:hover .anime-overlay {
-    opacity: 1;
-}
-
-.play-btn {
-    color: white;
-    font-size: 3rem;
-    background: none;
-    border: none;
-}
-
-.anime-type {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: var(--primary-color);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
-}
-
-.anime-info {
-    padding: 1rem;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.anime-title {
-    font-size: 1.1rem;
-    margin: 0 0 0.5rem 0;
-    font-weight: 600;
-}
-
-.anime-meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    margin-bottom: 0.75rem;
-}
-
-.anime-genres {
-    margin-top: auto;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.genre-tag {
-    background-color: var(--light-gray);
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
 }
