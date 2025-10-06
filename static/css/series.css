@@ -1,36 +1,38 @@
-body {
-    background-color: #121212;
+.series-page-container {
+    padding-top: 30px;
+    padding-bottom: 50px;
 }
 
-.series-container {
-    padding-top: 100px;
-    padding-bottom: 40px;
+.series-content-wrapper {
     display: grid;
-    grid-template-columns: 1fr 350px;
-    grid-template-rows: auto 1fr;
+    grid-template-columns: 3fr 1fr;
     gap: 30px;
-    grid-template-areas:
-        "player controls"
-        "info controls";
+    align-items: flex-start;
 }
 
-.series-player-area {
-    grid-area: player;
+@media (max-width: 992px) {
+    .series-content-wrapper {
+        grid-template-columns: 1fr;
+    }
+}
+
+.video-player-section {
     display: flex;
     flex-direction: column;
+    gap: 20px;
 }
 
-.video-player-wrapper {
+.video-player-container {
     position: relative;
     width: 100%;
-    padding-top: 56.25%;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio */
     background-color: #000;
-    border-radius: 8px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
 }
 
-.video-player-wrapper iframe {
+.video-player-container iframe {
     position: absolute;
     top: 0;
     left: 0;
@@ -39,187 +41,99 @@ body {
     border: none;
 }
 
-#current-episode-title {
-    color: #f5f5f5;
-    margin-top: 20px;
-    font-size: 1.5rem;
-    font-weight: 600;
+.series-details-content {
+    background-color: var(--card-bg);
+    padding: 25px;
+    border-radius: 12px;
 }
 
-.series-controls-area {
-    grid-area: controls;
-    background-color: #1a1a1a;
-    border-radius: 8px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    max-height: 80vh;
-}
-
-.series-controls-area .selectors {
-    margin-bottom: 20px;
-}
-
-.series-controls-area label {
-    display: block;
-    color: #aaa;
+.series-title {
+    font-size: 2.2rem;
+    font-weight: 700;
     margin-bottom: 10px;
+    color: var(--text-light);
+}
+
+.series-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+    margin-bottom: 15px;
     font-size: 0.9rem;
 }
 
-#season-selector {
-    width: 100%;
-    padding: 10px 15px;
-    background-color: #333;
-    color: #fff;
-    border: 1px solid #444;
-    border-radius: 6px;
+.series-description {
     font-size: 1rem;
-    cursor: pointer;
-    font-family: 'Assistant', sans-serif;
+    line-height: 1.7;
+    color: var(--text-normal);
 }
 
-#episode-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.episodes-panel {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    height: calc(100vh - 150px);
+    display: flex;
+    flex-direction: column;
+}
+
+.seasons-tabs {
+    display: flex;
+    background-color: var(--background-dark);
+    padding: 5px;
+    gap: 5px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.season-tab {
+    padding: 10px 15px;
+    border: none;
+    background-color: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+    white-space: nowrap;
+}
+
+.season-tab:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+}
+
+.season-tab.active {
+    background-color: var(--primary-color);
+    color: #fff;
+    font-weight: 600;
+}
+
+.episodes-list {
+    padding: 15px;
     overflow-y: auto;
     flex-grow: 1;
 }
 
-#episode-list::-webkit-scrollbar {
-    width: 8px;
-}
-
-#episode-list::-webkit-scrollbar-track {
-    background: #1a1a1a;
-}
-
-#episode-list::-webkit-scrollbar-thumb {
-    background-color: #555;
-    border-radius: 10px;
-    border: 2px solid #1a1a1a;
-}
-
-#episode-list li a {
-    display: flex;
-    align-items: center;
-    padding: 12px 10px;
-    color: #ccc;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    border-bottom: 1px solid #2a2a2a;
-}
-#episode-list li:last-child a {
-    border-bottom: none;
-}
-
-#episode-list li a:hover {
-    background-color: #333;
-    color: #fff;
-}
-
-#episode-list .ep-number {
-    font-weight: 700;
-    color: #e50914;
-    margin-right: 15px;
-    min-width: 25px;
-    text-align: center;
-}
-html[dir="rtl"] #episode-list .ep-number {
-    margin-right: 0;
-    margin-left: 15px;
-}
-
-#episode-list .ep-title {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-#episode-list .active-episode {
-    background-color: #e50914;
-    color: #fff;
-}
-#episode-list .active-episode .ep-number {
-    color: #fff;
-}
-
-.series-info-area {
-    grid-area: info;
-    display: flex;
-    gap: 30px;
-    padding-top: 20px;
-}
-
-.series-poster {
-    width: 200px;
-    height: auto;
-    object-fit: cover;
+.episode-item {
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background-color: var(--background-dark);
     border-radius: 8px;
-    align-self: flex-start;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    color: var(--text-normal);
+    font-weight: 500;
 }
 
-.series-details h1 {
-    color: #f5f5f5;
-    font-size: 2.5rem;
-    margin-top: 0;
-    margin-bottom: 15px;
+.episode-item:hover {
+    background-color: #3f4457;
 }
 
-.rating-box {
-    display: inline-block;
-    background-color: rgba(255, 255, 255, 0.1);
+.episode-item.active {
+    background-color: var(--primary-color);
     color: #fff;
-    padding: 8px 12px;
-    border-radius: 20px;
-    margin-bottom: 20px;
-    font-weight: 600;
-}
-.rating-box .fa-star {
-    color: #f5c518;
-    margin-right: 5px;
-}
-html[dir="rtl"] .rating-box .fa-star {
-    margin-right: 0;
-    margin-left: 5px;
-}
-
-.series-plot {
-    color: #b3b3b3;
-    line-height: 1.6;
-    font-size: 1rem;
-}
-
-
-@media (max-width: 992px) {
-    .series-container {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-            "player"
-            "controls"
-            "info";
-    }
-    .series-controls-area {
-        max-height: 400px;
-    }
-}
-
-@media (max-width: 576px) {
-    .series-info-area {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-    .series-poster {
-        width: 60%;
-        max-width: 250px;
-    }
-    .series-details h1 {
-        font-size: 1.8rem;
-    }
-    #current-episode-title {
-        font-size: 1.2rem;
-    }
+    box-shadow: 0 0 15px rgba(var(--primary-color-rgb), 0.5);
 }
