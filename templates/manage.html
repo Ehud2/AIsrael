@@ -53,7 +53,7 @@
                         <select id="existingSeriesSelect"></select>
                     </div>
                     <div id="episode-fields-container"></div>
-                    <button id="addEpisodeBtn" class="add-button">הוסף פרק</button>
+                    <button id="addEpisodesBtn" class="add-button">הוסף פרקים</button>
                 </div>
             </div>
 
@@ -137,7 +137,7 @@
         const addEpisodeArea = document.getElementById('add-episode-area');
         const existingSeriesSelect = document.getElementById('existingSeriesSelect');
         const episodeFieldsContainer = document.getElementById('episode-fields-container');
-        const addEpisodeBtn = document.getElementById('addEpisodeBtn');
+        const addEpisodesBtn = document.getElementById('addEpisodesBtn');
 
         const existingContentList = document.getElementById('existingContentList');
         const existingContentSearch = document.getElementById('existingContentSearch');
@@ -285,35 +285,61 @@
             await sendAddRequest(payload);
         }
         
-        async function handleAddEpisode() {
+        async function handleAddEpisodes() {
             const series_id = existingSeriesSelect.value;
             if (!series_id) { showStatus('יש לבחור סדרה', 'error'); return; }
-            const payload = {
-                type: 'episode',
-                series_id: series_id,
-                season: document.getElementById('seasonInput').value,
-                episode: document.getElementById('episodeInput').value,
-                video_url: document.getElementById('episodeVideoUrlInput').value
-            };
-            await sendAddRequest(payload);
+            const seasonInput = document.getElementById('seasonInput');
+            if (!seasonInput || !seasonInput.value) { showStatus('יש להזין מספר עונה', 'error'); return; }
+            const season_num = seasonInput.value;
+
+            const episodeRows = document.querySelectorAll('.episode-row');
+            if (episodeRows.length === 0) { showStatus('אין פרקים להוספה', 'info'); return; }
+
+            for (const row of episodeRows) {
+                const episodeNumInput = row.querySelector('.episode-number-input');
+                const videoUrlInput = row.querySelector('.episode-url-input');
+
+                if (episodeNumInput.value && videoUrlInput.value) {
+                     const payload = {
+                        type: 'episode',
+                        series_id: series_id,
+                        season: season_num,
+                        episode: episodeNumInput.value,
+                        video_url: videoUrlInput.value
+                    };
+                    try {
+                        await sendAddRequest(payload, false);
+                        row.style.border = "2px solid #03dac6"; // Success indication
+                        showStatus(`פרק ${episodeNumInput.value} נוסף בהצלחה`, 'success');
+                    } catch (e) {
+                         row.style.border = "2px solid #cf6679"; // Error indication
+                         showStatus(`שגיאה בהוספת פרק ${episodeNumInput.value}: ${e.message}`, 'error');
+                    }
+                }
+            }
+            showStatus('הוספת הפרקים הסתיימה.', 'info');
         }
 
-        async function sendAddRequest(payload) {
-            showStatus('מעבד...', 'info');
-            try {
-                const response = await fetch('/api/add_content', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-                if (response.ok && result.success) {
-                    showStatus(result.message, 'success');
-                    resetState();
-                    loadExistingContent();
-                } else { throw new Error(result.error || 'שגיאה לא ידועה'); }
-            } catch (error) {
-                showStatus(`שגיאה: ${error.message}`, 'error');
+        async function sendAddRequest(payload, shouldReset = true) {
+            if (!shouldReset) {
+                // Don't show the global "processing" message for batch adds
+            } else {
+                 showStatus('מעבד...', 'info');
+            }
+           
+            const response = await fetch('/api/add_content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || 'שגיאה לא ידועה');
+            }
+            if (shouldReset) {
+                showStatus(result.message, 'success');
+                resetState();
+                loadExistingContent();
             }
         }
 
@@ -420,6 +446,36 @@
             currentEditingContentId = null;
         }
         
+        function addEpisodeRow(episodeNumber = 1) {
+            const row = document.createElement('div');
+            row.className = 'episode-row';
+            row.innerHTML = `
+                <div class="form-group row-item">
+                    <label>פרק</label>
+                    <input type="number" class="episode-number-input" min="1" value="${episodeNumber}">
+                </div>
+                <div class="form-group row-item wide">
+                    <label>קישור וידאו</label>
+                    <input type="url" class="episode-url-input" placeholder="https://...">
+                </div>
+                <div class="row-actions">
+                    <button type="button" class="add-row-btn">+</button>
+                    <button type="button" class="remove-row-btn">-</button>
+                </div>
+            `;
+            episodeFieldsContainer.appendChild(row);
+        }
+
+        function initializeEpisodeFields() {
+            episodeFieldsContainer.innerHTML = `
+                <div class="form-group">
+                    <label for="seasonInput">מספר עונה:</label>
+                    <input type="number" id="seasonInput" min="1" value="1">
+                </div>
+            `;
+            addEpisodeRow();
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             loadCategories();
             loadExistingContent();
@@ -428,13 +484,15 @@
             searchBtn.addEventListener('click', handleSearch);
             searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSearch(); });
             addBtn.addEventListener('click', handleAdd);
-            addEpisodeBtn.addEventListener('click', handleAddEpisode);
+            addEpisodesBtn.addEventListener('click', handleAddEpisodes);
+
             updateCacheBtn.addEventListener('click', async () => {
                 showStatus('מעדכן...', 'info');
                 const response = await fetch('/api/update_json_cache', { method: 'POST' });
                 const result = await response.json();
                 showStatus(result.message || result.error, result.success ? 'success' : 'error');
             });
+
             createCategoryBtn.addEventListener('click', async () => {
                 const name = newCategoryNameInput.value.trim();
                 if (!name) { showStatus('יש להזין שם לקטגוריה', 'error'); return; }
@@ -451,9 +509,25 @@
             
             existingSeriesSelect.addEventListener('change', () => {
                 if(existingSeriesSelect.value) {
-                    episodeFieldsContainer.innerHTML = `<div class="form-group"><label for="seasonInput">מספר עונה:</label><input type="number" id="seasonInput" min="1" value="1"></div><div class="form-group"><label for="episodeInput">מספר פרק:</label><input type="number" id="episodeInput" min="1" value="1"></div><div class="form-group"><label for="episodeVideoUrlInput">קישור וידאו:</label><input type="url" id="episodeVideoUrlInput" placeholder="https://..."></div>`;
+                    initializeEpisodeFields();
                 } else {
                     episodeFieldsContainer.innerHTML = '';
+                }
+            });
+            
+            episodeFieldsContainer.addEventListener('click', e => {
+                if (e.target.classList.contains('add-row-btn')) {
+                    const currentRow = e.target.closest('.episode-row');
+                    const currentEpisodeNum = currentRow.querySelector('.episode-number-input').value;
+                    const nextEpisodeNum = currentEpisodeNum ? parseInt(currentEpisodeNum) + 1 : 1;
+                    addEpisodeRow(nextEpisodeNum);
+                }
+                if (e.target.classList.contains('remove-row-btn')) {
+                    if (episodeFieldsContainer.querySelectorAll('.episode-row').length > 1) {
+                        e.target.closest('.episode-row').remove();
+                    } else {
+                        showStatus('לא ניתן להסיר את שורת הפרק האחרונה.', 'info');
+                    }
                 }
             });
 
