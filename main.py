@@ -66,13 +66,23 @@ def update_data_json_from_db():
     if all_anime_dict:
         for key, value in all_anime_dict.items():
             value['id'] = key
-            category_id = value.get('categoryId')
-            value['categoryName'] = category_map.get(category_id, 'ללא קטגוריה')
+            
+            category_ids = value.get('categoryIds')
+            if category_ids is None:
+                legacy_category_id = value.get('categoryId')
+                category_ids = [legacy_category_id] if legacy_category_id else []
+            
+            if not isinstance(category_ids, list):
+                category_ids = [category_ids]
+            
+            value['categoryIds'] = category_ids
+            value['categoryNames'] = [category_map.get(cat_id, 'ללא קטגוריה') for cat_id in category_ids]
+
             all_anime_list.append(value)
     
     with open(DATA_JSON_PATH, 'w', encoding='utf-8') as f:
         json.dump(all_anime_list, f, ensure_ascii=False, indent=2)
-    print("data.json has been updated successfully with category information.")
+    print("data.json has been updated successfully with multi-category information.")
 
 @app.route('/login')
 def login():
@@ -132,7 +142,64 @@ def add_category():
     try:
         ref = db.reference('categories')
         ref.push({'name': category_name})
+        update_data_json_from_db()
         return jsonify({'success': True, 'message': f'קטגוריה "{category_name}" נוצרה בהצלחה!'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/categories/<category_id>', methods=['PUT'])
+def rename_category(category_id):
+    data = request.json
+    new_name = data.get('name')
+    if not new_name:
+        return jsonify({'error': 'שם חדש הוא שדה חובה'}), 400
+    try:
+        ref = db.reference(f'categories/{category_id}')
+        ref.update({'name': new_name})
+        update_data_json_from_db()
+        return jsonify({'success': True, 'message': 'שם הקטגוריה עודכן בהצלחה'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/categories/<category_id>', methods=['DELETE'])
+def delete_category(category_id):
+    try:
+        anime_ref = db.reference('anime')
+        all_anime = anime_ref.get()
+        if all_anime:
+            for anime_id, anime_data in all_anime.items():
+                category_ids = anime_data.get('categoryIds', [])
+                
+                if not isinstance(category_ids, list):
+                    legacy_id = anime_data.get('categoryId')
+                    category_ids = [legacy_id] if legacy_id else []
+
+                if category_id in category_ids:
+                    category_ids.remove(category_id)
+                    db.reference(f'anime/{anime_id}').update({'categoryIds': category_ids})
+
+        db.reference(f'categories/{category_id}').delete()
+        update_data_json_from_db()
+        return jsonify({'success': True, 'message': 'הקטגוריה וכל שיוכיה נמחקו בהצלחה'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+        
+@app.route('/api/content/<content_id>/categories', methods=['PUT'])
+def update_content_categories(content_id):
+    data = request.json
+    category_ids = data.get('category_ids')
+    if category_ids is None or not isinstance(category_ids, list):
+        return jsonify({'error': 'יש לספק רשימה של מזהי קטגוריות'}), 400
+    try:
+        ref = db.reference(f'anime/{content_id}')
+        update_payload = {'categoryIds': category_ids}
+        ref.update(update_payload)
+        
+        if ref.child('categoryId').get():
+            ref.child('categoryId').delete()
+
+        update_data_json_from_db()
+        return jsonify({'success': True, 'message': 'קטגוריות התוכן עודכנו בהצלחה'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -266,10 +333,10 @@ def add_content():
             return jsonify({'success': True, 'message': f'פרק {episode_num} נוסף לעונה {season_num}'})
 
         tmdb_id = str(data.get('tmdb_id'))
-        category_id = data.get('category_id')
+        category_ids = data.get('category_ids')
 
-        if not tmdb_id or not category_id:
-             return jsonify({'error': 'TMDB ID and Category ID are required'}), 400
+        if not tmdb_id or not category_ids:
+             return jsonify({'error': 'TMDB ID and at least one Category ID are required'}), 400
 
         tmdb_api_type = 'tv' if content_type == 'series' else 'movie'
         url = f"{TMDB_BASE_URL}/{tmdb_api_type}/{tmdb_id}?api_key={TMDB_API_KEY}&language=he-IL"
@@ -294,7 +361,7 @@ def add_content():
                 'banner': f"{TMDB_IMAGE_BASE_URL}{details.get('backdrop_path')}" if details.get('backdrop_path') else '',
                 'genre': genres,
                 'description': details.get('overview', ''),
-                'categoryId': category_id,
+                'categoryIds': category_ids,
                 'year': details.get('first_air_date', '----').split('-')[0],
                 'episodes': details.get('number_of_episodes', 0)
             }
@@ -316,7 +383,7 @@ def add_content():
                 'banner': f"{TMDB_IMAGE_BASE_URL}{details.get('backdrop_path')}" if details.get('backdrop_path') else '',
                 'genre': genres,
                 'description': details.get('overview', ''),
-                'categoryId': category_id,
+                'categoryIds': category_ids,
                 'year': details.get('release_date', '----').split('-')[0],
                 'duration': details.get('runtime', 0),
                 'video_url': data.get('video_url', '')
