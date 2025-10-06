@@ -78,62 +78,105 @@
     flex-direction: column;
 }
 
-.seasons-tabs {
-    display: flex;
+.panel-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
     background-color: var(--background-dark);
-    padding: 5px;
-    gap: 5px;
-    overflow-x: auto;
-    scrollbar-width: thin;
 }
 
-.season-tab {
-    padding: 10px 15px;
-    border: none;
-    background-color: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 500;
-    border-radius: 6px;
-    transition: all 0.2s ease-in-out;
-    white-space: nowrap;
-}
-
-.season-tab:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+.panel-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
     color: var(--text-light);
 }
 
-.season-tab.active {
-    background-color: var(--primary-color);
-    color: #fff;
+.seasons-accordion {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding: 10px;
+}
+
+.season-item {
+    margin-bottom: 5px;
+}
+
+.season-header {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--background-dark);
+    border: none;
+    border-radius: 8px;
+    color: var(--text-light);
+    font-size: 1rem;
     font-weight: 600;
+    cursor: pointer;
+    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.season-header:hover {
+    background-color: #3f4457;
+}
+
+.season-header .arrow-icon {
+    border: solid var(--text-muted);
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 3px;
+    transform: rotate(45deg);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.season-item.active > .season-header .arrow-icon {
+    transform: rotate(-135deg);
+    border-color: var(--primary-color);
+}
+
+.season-item.active > .season-header {
+    color: var(--primary-color);
 }
 
 .episodes-list {
-    padding: 15px;
-    overflow-y: auto;
-    flex-grow: 1;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+    padding: 0 10px;
+}
+
+.season-item.active .episodes-list {
+    max-height: 1000px; /* A large value to allow content to expand */
+    padding: 10px;
 }
 
 .episode-item {
     padding: 12px 15px;
     margin-bottom: 8px;
-    background-color: var(--background-dark);
-    border-radius: 8px;
+    background-color: var(--card-bg-light);
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
     color: var(--text-normal);
     font-weight: 500;
+    border-right: 3px solid transparent;
 }
 
 .episode-item:hover {
     background-color: #3f4457;
+    border-right-color: var(--text-muted);
 }
 
 .episode-item.active {
-    background-color: var(--primary-color);
-    color: #fff;
-    box-shadow: 0 0 15px rgba(var(--primary-color-rgb), 0.5);
+    background-color: rgba(var(--primary-color-rgb), 0.15);
+    color: var(--primary-color);
+    font-weight: 600;
+    border-right-color: var(--primary-color);
+}
+
+.no-content-message {
+    padding: 15px;
+    color: var(--text-muted);
+    text-align: center;
 }
