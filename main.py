@@ -222,24 +222,22 @@ def add_content():
     if not content_type:
         return jsonify({'error': 'Content type is required'}), 400
 
-    if content_type == 'episode':
-        series_id = data.get('series_id')
-        season_num = data.get('season')
-        episode_num = data.get('episode')
-        video_url = data.get('video_url')
-        
-        if not all([series_id, season_num, episode_num, video_url]):
-            return jsonify({'error': 'Missing data for episode'}), 400
+    try:
+        if content_type == 'episode':
+            series_id = str(data.get('series_id'))
+            season_num = data.get('season')
+            episode_num = data.get('episode')
+            video_url = data.get('video_url')
             
-        try:
+            if not all([series_id, season_num, episode_num, video_url]):
+                return jsonify({'error': 'Missing data for episode'}), 400
+                
             ref = db.reference(f'anime/{series_id}/seasons/{season_num}/episodes/{episode_num}')
             ref.set({'video_url': video_url})
             return jsonify({'success': True, 'message': f'פרק {episode_num} נוסף לעונה {season_num}'})
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
 
-    else:
-        tmdb_id = data.get('tmdb_id')
+        # Logic for adding Series or Movie
+        tmdb_id = str(data.get('tmdb_id'))
         category_id = data.get('category_id')
 
         if not tmdb_id or not category_id:
@@ -247,44 +245,65 @@ def add_content():
 
         tmdb_api_type = 'tv' if content_type == 'series' else 'movie'
         url = f"{TMDB_BASE_URL}/{tmdb_api_type}/{tmdb_id}?api_key={TMDB_API_KEY}&language=he-IL"
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            details = response.json()
+        
+        response = requests.get(url)
+        response.raise_for_status()
+        details = response.json()
 
-            genre_map = GENRE_MAP_TV if content_type == 'series' else GENRE_MAP_MOVIE
+        ref = db.reference(f'anime/{tmdb_id}')
+        message = ""
+
+        if content_type == 'series':
+            genre_map = GENRE_MAP_TV
             genres = [genre_map.get(g['id'], g['name']) for g in details.get('genres', [])]
-            
-            common_data = {
+            series_data = {
                 'id': details.get('id'),
-                'title': details.get('original_title') or details.get('original_name'),
-                'title_he': details.get('title') or details.get('name'),
-                'type': content_type,
+                'title': details.get('original_name'),
+                'title_he': details.get('name'),
+                'type': 'series',
                 'rating': round(details.get('vote_average', 0), 1),
                 'image': f"{TMDB_IMAGE_BASE_URL}{details.get('poster_path')}" if details.get('poster_path') else '',
                 'banner': f"{TMDB_IMAGE_BASE_URL}{details.get('backdrop_path')}" if details.get('backdrop_path') else '',
                 'genre': genres,
                 'description': details.get('overview', ''),
-                'categoryId': category_id
+                'categoryId': category_id,
+                'year': details.get('first_air_date', '----').split('-')[0],
+                'episodes': details.get('number_of_episodes', 0)
             }
+            if not ref.child('seasons').get():
+                series_data['seasons'] = {}
+            ref.update(series_data)
+            message = f'"{series_data["title_he"]}" נוספה בהצלחה!'
+        
+        elif content_type == 'movie':
+            genre_map = GENRE_MAP_MOVIE
+            genres = [genre_map.get(g['id'], g['name']) for g in details.get('genres', [])]
+            movie_data = {
+                'id': details.get('id'),
+                'title': details.get('original_title'),
+                'title_he': details.get('title'),
+                'type': 'movie',
+                'rating': round(details.get('vote_average', 0), 1),
+                'image': f"{TMDB_IMAGE_BASE_URL}{details.get('poster_path')}" if details.get('poster_path') else '',
+                'banner': f"{TMDB_IMAGE_BASE_URL}{details.get('backdrop_path')}" if details.get('backdrop_path') else '',
+                'genre': genres,
+                'description': details.get('overview', ''),
+                'categoryId': category_id,
+                'year': details.get('release_date', '----').split('-')[0],
+                'duration': details.get('runtime', 0),
+                'video_url': data.get('video_url', '')
+            }
+            ref.update(movie_data)
+            message = f'"{movie_data["title_he"]}" נוסף בהצלחה!'
+        
+        else:
+            return jsonify({'error': 'Unsupported content type'}), 400
 
-            if content_type == 'series':
-                common_data['year'] = details.get('first_air_date', '----').split('-')[0]
-                common_data['episodes'] = details.get('number_of_episodes', 0)
-                if not db.reference(f'anime/{tmdb_id}/seasons').get():
-                    common_data['seasons'] = {}
-            else:
-                common_data['year'] = details.get('release_date', '----').split('-')[0]
-                common_data['duration'] = details.get('runtime', 0)
-                common_data['video_url'] = data.get('video_url', '')
+        update_data_json_from_db()
+        return jsonify({'success': True, 'message': message})
 
-            ref = db.reference(f'anime/{tmdb_id}')
-            ref.update(common_data)
-            
-            update_data_json_from_db()
-            return jsonify({'success': True, 'message': f'"{common_data["title_he"]}" נוסף בהצלחה!'})
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/update_json_cache', methods=['POST'])
