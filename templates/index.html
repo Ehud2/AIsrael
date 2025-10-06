@@ -202,11 +202,15 @@
                 }, {});
             } else {
                 groupedContent = data.reduce((acc, anime) => {
-                    const category = anime.categoryName || 'ללא קטגוריה';
-                    if (!acc[category]) {
-                        acc[category] = [];
-                    }
-                    acc[category].push(anime);
+                    const categories = anime.categoryNames && anime.categoryNames.length > 0 ? anime.categoryNames : ['ללא קטגוריה'];
+                    categories.forEach(categoryName => {
+                        if (!acc[categoryName]) {
+                            acc[categoryName] = [];
+                        }
+                        if (!acc[categoryName].some(item => item.id === anime.id)) {
+                            acc[categoryName].push(anime);
+                        }
+                    });
                     return acc;
                 }, {});
             }
@@ -215,7 +219,6 @@
             if(groupedContent['סדרות'] && groupedContent['סרטים']) {
                 categoriesInOrder.sort((a, b) => a === 'סדרות' ? -1 : 1);
             }
-
 
             for (const categoryName of categoriesInOrder) {
                 const animeList = groupedContent[categoryName];
