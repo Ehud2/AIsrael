@@ -31,8 +31,8 @@
                 <div id="add-new-content-area">
                     <div id="category-selection-area">
                         <div class="form-group">
-                            <label for="categorySelect">בחירת קטגוריה:</label>
-                            <select id="categorySelect">
+                            <label for="categorySelect">בחירת קטגוריות (Ctrl/Cmd לבחירה מרובה):</label>
+                            <select id="categorySelect" multiple>
                                 <option value="">טוען קטגוריות...</option>
                             </select>
                         </div>
@@ -82,6 +82,10 @@
                         <button id="createCategoryBtn">צור קטגוריה</button>
                     </div>
                 </div>
+                <div id="categoryListContainer">
+                    <h4>קטגוריות קיימות:</h4>
+                    <ul id="categoryList" class="category-list"></ul>
+                </div>
             </div>
             
             <div class="form-section">
@@ -102,6 +106,18 @@
         <div id="statusMessage" class="status-message"></div>
     </div>
 
+    <div id="editCategoryModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>עריכת קטגוריות עבור <span id="modalContentTitle"></span></h3>
+            <div class="form-group">
+                <label for="modalCategorySelect">בחירת קטגוריות (Ctrl/Cmd לבחירה מרובה):</label>
+                <select id="modalCategorySelect" multiple></select>
+            </div>
+            <button id="saveCategoryChangesBtn" class="add-button">שמור שינויים</button>
+        </div>
+    </div>
+
     <script>
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
@@ -115,6 +131,7 @@
         const categorySelect = document.getElementById('categorySelect');
         const createCategoryBtn = document.getElementById('createCategoryBtn');
         const newCategoryNameInput = document.getElementById('newCategoryName');
+        const categoryList = document.getElementById('categoryList');
         
         const addNewContentArea = document.getElementById('add-new-content-area');
         const addEpisodeArea = document.getElementById('add-episode-area');
@@ -125,8 +142,16 @@
         const existingContentList = document.getElementById('existingContentList');
         const existingContentSearch = document.getElementById('existingContentSearch');
 
+        const editModal = document.getElementById('editCategoryModal');
+        const modalContentTitle = document.getElementById('modalContentTitle');
+        const modalCategorySelect = document.getElementById('modalCategorySelect');
+        const saveCategoryChangesBtn = document.getElementById('saveCategoryChangesBtn');
+        const closeModalBtn = editModal.querySelector('.close-button');
+
         let selectedItem = null;
         let allExistingContent = [];
+        let allCategories = [];
+        let currentEditingContentId = null;
 
         function getSelectedContentType() {
             return document.querySelector('input[name="contentType"]:checked').value;
@@ -135,16 +160,37 @@
         async function loadCategories() {
             try {
                 const response = await fetch('/api/categories');
-                const categories = await response.json();
-                categorySelect.innerHTML = '<option value="">-- בחר קטגוריה --</option>';
-                categories.forEach(cat => {
+                allCategories = await response.json();
+                
+                categorySelect.innerHTML = '';
+                modalCategorySelect.innerHTML = '';
+                categoryList.innerHTML = '';
+
+                if (allCategories.length === 0) {
+                     categoryList.innerHTML = '<li>אין קטגוריות להצגה.</li>';
+                }
+
+                allCategories.forEach(cat => {
                     const option = document.createElement('option');
                     option.value = cat.id;
                     option.textContent = cat.name;
-                    categorySelect.appendChild(option);
+                    categorySelect.appendChild(option.cloneNode(true));
+                    modalCategorySelect.appendChild(option);
+
+                    const li = document.createElement('li');
+                    li.className = 'category-item';
+                    li.innerHTML = `
+                        <span>${cat.name}</span>
+                        <div class="cat-actions">
+                            <button class="rename-btn" data-id="${cat.id}" data-name="${cat.name}">שנה שם</button>
+                            <button class="delete-btn small" data-id="${cat.id}">מחק</button>
+                        </div>
+                    `;
+                    categoryList.appendChild(li);
                 });
             } catch (error) {
                 console.error("Failed to load categories:", error);
+                categoryList.innerHTML = '<li>שגיאה בטעינת קטגוריות.</li>';
             }
         }
 
@@ -225,12 +271,14 @@
         async function handleAdd() {
             if (!selectedItem) return;
             const contentType = getSelectedContentType();
-            const categoryId = categorySelect.value;
-            if (contentType !== 'episode' && !categoryId) {
-                showStatus('חובה לבחור קטגוריה', 'error');
+            const categoryIds = Array.from(categorySelect.selectedOptions).map(option => option.value);
+
+            if (contentType !== 'episode' && categoryIds.length === 0) {
+                showStatus('חובה לבחור לפחות קטגוריה אחת', 'error');
                 return;
             }
-            const payload = { type: contentType, tmdb_id: selectedItem.id, category_id: categoryId };
+            
+            const payload = { type: contentType, tmdb_id: selectedItem.id, category_ids: categoryIds };
             if (contentType === 'movie') {
                 payload.video_url = document.getElementById('videoUrlInput').value;
             }
@@ -304,8 +352,10 @@
                     <div class="existing-item-info">
                         <h4>${item.title_he}</h4>
                         <span>${item.type === 'series' ? 'סדרה' : 'סרט'} | ${item.year}</span>
+                        <p class="category-tags">קטגוריות: ${item.categoryNames.join(', ') || 'אין'}</p>
                     </div>
                     <div class="existing-item-actions">
+                        <button class="edit-btn" data-id="${item.id}">ערוך קטגוריות</button>
                         <button class="delete-btn" data-id="${item.id}">מחק</button>
                     </div>
                 `;
@@ -313,7 +363,7 @@
             });
         }
         
-        async function handleDelete(contentId) {
+        async function handleDeleteContent(contentId) {
             if (!confirm('האם אתה בטוח שברצונך למחוק תוכן זה? הפעולה אינה הפיכה.')) return;
             showStatus('מוחק...', 'info');
             try {
@@ -344,9 +394,29 @@
             searchInput.value = '';
             episodeFieldsContainer.innerHTML = '';
             if(existingSeriesSelect.options.length > 0) existingSeriesSelect.selectedIndex = 0;
+            categorySelect.selectedIndex = -1;
             selectedItem = null;
         }
 
+        function openEditModal(contentId) {
+            const item = allExistingContent.find(c => c.id == contentId);
+            if (!item) return;
+            
+            currentEditingContentId = contentId;
+            modalContentTitle.textContent = item.title_he;
+            
+            Array.from(modalCategorySelect.options).forEach(option => {
+                option.selected = item.categoryIds && item.categoryIds.includes(option.value);
+            });
+            
+            editModal.style.display = 'block';
+        }
+
+        function closeEditModal() {
+            editModal.style.display = 'none';
+            currentEditingContentId = null;
+        }
+        
         document.addEventListener('DOMContentLoaded', () => {
             loadCategories();
             loadExistingContent();
@@ -388,7 +458,63 @@
             document.querySelectorAll('input[name="filterType"]').forEach(radio => radio.addEventListener('change', renderExistingContent));
             existingContentList.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-btn')) {
-                    handleDelete(e.target.dataset.id);
+                    handleDeleteContent(e.target.dataset.id);
+                }
+                if (e.target.classList.contains('edit-btn')) {
+                    openEditModal(e.target.dataset.id);
+                }
+            });
+
+            categoryList.addEventListener('click', async (e) => {
+                const target = e.target;
+                const id = target.dataset.id;
+                if (target.classList.contains('delete-btn')) {
+                    if (!confirm('האם אתה בטוח שברצונך למחוק קטגוריה זו? הפעולה תסיר את הקטגוריה מכל הסרטים/סדרות המשויכים אליה.')) return;
+                    const response = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+                    const result = await response.json();
+                    showStatus(result.message || result.error, response.ok ? 'success' : 'error');
+                    if (response.ok) {
+                        loadCategories();
+                        loadExistingContent();
+                    }
+                }
+                if (target.classList.contains('rename-btn')) {
+                    const currentName = target.dataset.name;
+                    const newName = prompt('הזן שם חדש לקטגוריה:', currentName);
+                    if (newName && newName.trim() !== '' && newName !== currentName) {
+                         const response = await fetch(`/api/categories/${id}`, { 
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: newName.trim() })
+                        });
+                        const result = await response.json();
+                        showStatus(result.message || result.error, response.ok ? 'success' : 'error');
+                        if (response.ok) {
+                            loadCategories();
+                            loadExistingContent();
+                        }
+                    }
+                }
+            });
+
+            closeModalBtn.addEventListener('click', closeEditModal);
+            saveCategoryChangesBtn.addEventListener('click', async () => {
+                const selectedIds = Array.from(modalCategorySelect.selectedOptions).map(opt => opt.value);
+                const response = await fetch(`/api/content/${currentEditingContentId}/categories`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category_ids: selectedIds })
+                });
+                const result = await response.json();
+                showStatus(result.message || result.error, response.ok ? 'success' : 'error');
+                if (response.ok) {
+                    closeEditModal();
+                    loadExistingContent();
+                }
+            });
+            window.addEventListener('click', (e) => {
+                if (e.target == editModal) {
+                    closeEditModal();
                 }
             });
         });
