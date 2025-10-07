@@ -336,15 +336,27 @@ def add_content():
         if content_type == 'episode':
             series_id = str(data.get('series_id'))
             season_num = data.get('season')
-            episode_num = data.get('episode')
-            video_url = data.get('video_url')
+            episodes = data.get('episodes')
+
+            if not all([series_id, season_num, episodes]):
+                return jsonify({'error': 'Missing data for bulk episode add'}), 400
             
-            if not all([series_id, season_num, episode_num, video_url]):
-                return jsonify({'error': 'Missing data for episode'}), 400
-                
-            ref = db.reference(f'anime/{series_id}/seasons/{season_num}/episodes/{episode_num}')
-            ref.set({'video_url': video_url})
-            return jsonify({'success': True, 'message': f'פרק {episode_num} נוסף לעונה {season_num}'})
+            if not isinstance(episodes, list):
+                 return jsonify({'error': 'Episodes data must be a list'}), 400
+
+            updates = {}
+            for episode_data in episodes:
+                episode_num = episode_data.get('episode')
+                video_url = episode_data.get('video_url')
+                if episode_num is not None and video_url:
+                    path = f'anime/{series_id}/seasons/{season_num}/episodes/{episode_num}'
+                    updates[path] = {'video_url': video_url}
+            
+            if not updates:
+                return jsonify({'error': 'No valid episodes provided'}), 400
+
+            db.reference().update(updates)
+            return jsonify({'success': True, 'message': f'{len(updates)} פרקים נוספו בהצלחה לעונה {season_num}'})
 
         tmdb_id = str(data.get('tmdb_id'))
         category_ids = data.get('category_ids')
