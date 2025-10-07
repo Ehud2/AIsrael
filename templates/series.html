@@ -148,12 +148,20 @@
                 episodesList.className = 'episodes-list';
 
                 if (season.episodes && Object.keys(season.episodes).length > 0) {
+                    console.log(`עונה ${seasonNum} - נמצאו ${Object.keys(season.episodes).length} פרקים. מתחיל לעבד...`);
                     const episodeKeys = Object.keys(season.episodes).sort((a, b) => Number(a) - Number(b));
-                     episodeKeys.forEach(episodeNum => {
+                    
+                    episodeKeys.forEach(episodeNum => {
+                        // מדפיסים לפני כל בדיקה אחרת
+                        console.log(`מעבד את עונה ${seasonNum}, פרק ${episodeNum}`);
+                
                         const episode = season.episodes[episodeNum];
                         
-                        if (!episode || !episode.video_url) return;
-
+                        if (!episode || !episode.video_url) {
+                            console.warn(`פרק ${episodeNum} לא תקין או חסר video_url. מדלג.`);
+                            return;
+                        }
+                
                         const episodeElement = document.createElement('div');
                         episodeElement.className = 'episode-item';
                         episodeElement.textContent = `פרק ${episodeNum}`;
@@ -165,7 +173,7 @@
                         };
                         episodesList.appendChild(episodeElement);
                     });
-                } 
+                }
                 
                 if (!episodesList.hasChildNodes()){
                     episodesList.innerHTML = '<p class="no-content-message">לא נמצאו פרקים לעונה זו.</p>';
