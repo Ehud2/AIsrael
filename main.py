@@ -442,19 +442,43 @@ def series_page(series_id):
     if not series_data or series_data.get('type') != 'series':
         return redirect(url_for('index'))
 
-    if 'seasons' in series_data and isinstance(series_data['seasons'], dict):
+    if 'seasons' in series_data and series_data['seasons']:
+        # Firebase יכול לשמור רשימה של עונות כמערך אם המפתחות הם 0, 1, 2...
+        # אנחנו נהפוך את זה בחזרה לאובייקט אם צריך.
+        seasons_dict = {}
+        if isinstance(series_data['seasons'], list):
+            for i, season in enumerate(series_data['seasons']):
+                if season: # נדלג על ערכי null
+                    seasons_dict[str(i)] = season
+        else: # אם זה כבר אובייקט
+            seasons_dict = series_data['seasons']
+
         sorted_seasons = {}
-        sorted_season_keys = sorted(series_data['seasons'].keys(), key=int)
+        # ממיין את מפתחות העונות כמספרים
+        sorted_season_keys = sorted(seasons_dict.keys(), key=int)
         
         for season_key in sorted_season_keys:
-            season = series_data['seasons'][season_key]
-            if 'episodes' in season and isinstance(season['episodes'], dict):
+            season = seasons_dict[season_key]
+            
+            # התיקון הקריטי נמצא כאן: הופכים את מערך הפרקים לאובייקט
+            if 'episodes' in season and isinstance(season.get('episodes'), list):
+                episodes_list = season['episodes']
+                episodes_dict = {}
+                for i, episode in enumerate(episodes_list):
+                    if episode: # נדלג על ערכי null
+                        episodes_dict[str(i)] = episode
+                season['episodes'] = episodes_dict
+
+            # מבטיח שהפרקים ממוינים אם הם כבר אובייקט
+            if 'episodes' in season and isinstance(season.get('episodes'), dict):
                 sorted_episodes = {}
                 sorted_episode_keys = sorted(season['episodes'].keys(), key=int)
                 for episode_key in sorted_episode_keys:
                     sorted_episodes[episode_key] = season['episodes'][episode_key]
                 season['episodes'] = sorted_episodes
+                
             sorted_seasons[season_key] = season
+        
         series_data['seasons'] = sorted_seasons
 
     return render_template('series.html', series=series_data, user=session.get('user'))
