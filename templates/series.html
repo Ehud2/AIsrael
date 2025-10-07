@@ -132,7 +132,7 @@
                 return;
             }
 
-            const seasonKeys = Object.keys(seriesData.seasons).sort((a, b) => parseInt(a) - parseInt(b));
+            const seasonKeys = Object.keys(seriesData.seasons);
             seasonKeys.forEach(seasonNum => {
                 const season = seriesData.seasons[seasonNum];
                 if (!season) return;
@@ -148,8 +148,8 @@
                 episodesList.className = 'episodes-list';
 
                 if (season.episodes && Object.keys(season.episodes).length > 0) {
-                    const episodeKeys = Object.keys(season.episodes).sort((a, b) => parseInt(a) - parseInt(b));
-                    episodeKeys.forEach(episodeNum => {
+                    const episodeKeys = Object.keys(season.episodes).sort((a, b) => Number(a) - Number(b));
+                     episodeKeys.forEach(episodeNum => {
                         const episode = season.episodes[episodeNum];
                         
                         if (!episode || !episode.video_url) return;
