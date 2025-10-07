@@ -22,15 +22,13 @@
     gap: 20px;
 }
 
-/* --- שיפור מסגרת הנגן --- */
 .video-player-container {
     position: relative;
     width: 100%;
-    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    padding-top: 56.25%;
     background-color: #000;
     border-radius: 12px;
     overflow: hidden;
-    /* הוספת מסגרת וזוהר כדי לשלב את הנגן בעיצוב */
     border: 2px solid rgba(var(--primary-color-rgb), 0.3);
     box-shadow: 0 0 20px rgba(var(--primary-color-rgb), 0.3);
 }
@@ -43,7 +41,6 @@
     height: 100%;
     border: none;
 }
-/* ------------------------ */
 
 .series-details-content {
     background-color: var(--card-bg);
@@ -94,16 +91,13 @@
     color: var(--text-light);
 }
 
-/* --- רקע כחלחל לפאנל --- */
 .seasons-accordion {
     overflow-y: auto;
     flex-grow: 1;
     padding: 10px;
-    /* רקע כחלחל עדין שמתאים לעיצוב */
     background: linear-gradient(to bottom, rgba(var(--primary-color-rgb), 0.05), rgba(var(--primary-color-rgb), 0.1));
     border-top: 1px solid rgba(var(--primary-color-rgb), 0.1);
 }
-/* ----------------------- */
 
 .season-item {
     margin-bottom: 5px;
@@ -156,9 +150,8 @@
 }
 
 .season-item.active .episodes-list {
-    max-height: 1000px; /* A large value to allow content to expand */
-    /* --- הזחת פרקים פנימה --- */
-    padding: 10px 20px 10px 10px; /* 20px מימין ידחוף את התוכן פנימה */
+    max-height: 5000px;
+    padding: 10px 20px 10px 10px;
 }
 
 .episode-item {
